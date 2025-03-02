@@ -1,28 +1,39 @@
 
 services:
-  come-backend:
+  backend:
     build: ./come-back
     restart: always
     ports:
       - "8080:8080"
+    volumes:
+      - ./.env:/app/.env
     environment:
       - MYSQL_DSN=${MYSQL_DSN}
       - REDIS_ADDR=${REDIS_ADDR}
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   mysql:
     image: mysql:8.0
     ports:
-      - "3307:3306"
+      - "3306:3306"
     environment:
+      MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_DATABASE: come_db
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE} 
       TZ: Asia/Shanghai
     volumes:
       - mysql_data:/var/lib/mysql
       - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -u root -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
 
   redis:
     image: redis:7.0-alpine
