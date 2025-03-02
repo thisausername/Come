@@ -1,23 +1,21 @@
 # build 
-
-FROM golang:1.21-alpine AS builder
+FROM golang:1.24-bookworm AS builder
 
 WORKDIR /app
-COPY go.mod go.sum ./
+COPY go.mod .
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o Come ./main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o come-back .
 
 
 # image
 
-FROM alpine:latest
+FROM debian:12-slim
 
 WORKDIR /app
-COPY --from=builder /app/Come ./
-COPY ./config/config.yaml ./config/
+COPY --from=builder /app/come-back .
 
 EXPOSE 8080
-CMD ["./Come"]
+CMD ["./come-back"]
 
