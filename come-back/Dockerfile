@@ -3,6 +3,7 @@ FROM golang:1.24-bookworm AS builder
 
 WORKDIR /app
 COPY go.mod .
+ENV GOPROXY=https://goproxy.cn,direct
 RUN go mod download
 
 COPY . .
