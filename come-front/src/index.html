@@ -1,40 +1,51 @@
-<!-- come-front/src/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to Come Forum</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f2f5;
-        }
-        .welcome-box {
-            text-align: center;
-            padding: 2rem;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #2c3e50;
-        }
-        p {
-            color: #7f8c8d;
-        }
-    </style>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/components.css">
 </head>
+
 <body>
     <div class="welcome-box">
         <h1>🎉 Welcome to Come Forum!</h1>
         <p>A place for developers to share and connect.</p>
-        <p><a href="/api/register">Register</a> or <a href="/api/login">Login</a> to get started.</p>
+
+        <div class="tabs">
+            <button class="tabs__button active" data-form-type="login">Login</button>
+            <button class="tabs__button hidden" data-form-type="register">Register</button>
+        </div>
+
+        <div id="login-form" class="form active">
+            <h2>Login</h2>
+            <form id="login">
+                <label class="form__label">Email
+                    <input class="form__input" type="email" name="email" required>
+                </label>
+                <label class="form__label">Password
+                    <input class="form__input" type="password" name="password" required>
+                </label>
+                <button class="form__button" type="submit">Login</button>
+            </form>
+        </div>
+
+        <div id="register-form" class="form">
+            <h2>Register</h2>
+            <form id="register">
+                <label class="form__label">Email
+                    <input class="form__input" type="email" name="email" required>
+                </label>
+                <label class="form__label">Password
+                    <input class="form__input" type="password" name="password" required>
+                </label>
+                <button class="form__button" type="submit">Register</button>
+            </form>
+        </div>
     </div>
+
+    <script type="module" src="./js/main.js"></script>
 </body>
 </html>
