@@ -28,7 +28,7 @@ func Register(c *gin.Context) {
 func Login(c *gin.Context) {
 	var loginReq struct {
 		Username string `json:"username"`
-		Password string `json:"username`
+		Password string `json:"password"`
 	}
 	c.ShouldBindJSON(&loginReq)
 

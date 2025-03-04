@@ -1,4 +1,13 @@
 services:
+  frontend:
+    build: ./come-front-vite
+    ports:
+      - "80:80"
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
+    depends_on:
+      - backend
+
   backend:
     build: ./come-back
     restart: always
@@ -14,13 +23,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-
-  frontend:
-    build: ./come-front
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
 
   mysql:
     image: mysql:8.0
