@@ -3,6 +3,7 @@ package controller
 import (
 	"come-back/model"
 	"come-back/repository"
+	"net/http"
 	"os"
 	"time"
 
@@ -12,34 +13,56 @@ import (
 )
 
 func Register(c *gin.Context) {
-	var user model.User
-	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(400, gin.H{"error": "wrong request format"})
-		return
-	}
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	user.Password = string(hashedPassword)
-	if err := repository.DB.Create(&user).Error; err != nil {
-		c.JSON(500, gin.H{"error": "register failed"})
-	}
-	c.JSON(201, gin.H{"message": "register success"})
+	resp := processRegister(c)
+	c.JSON(resp.Code, resp)
 }
 
 func Login(c *gin.Context) {
+	resp := processLogin(c)
+	c.JSON(resp.Code, resp)
+}
+
+func processRegister(c *gin.Context) *ServerResponse[string] {
+	var user model.User
+
+	if err := c.ShouldBindJSON(&user); err != nil {
+		return Error(http.StatusBadRequest, "wrong request format")
+	}
+	if user.Email == "" || user.Username == "" || user.Password == "" {
+		return Error(http.StatusBadRequest, "missing required registration information")
+	}
+
+	if _, err := repository.GetUserByEmail(user.Email); err == nil {
+		return Error(http.StatusConflict, "email already in use")
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return Error(http.StatusInternalServerError, "failed to hash password")
+	}
+	user.Password = string(hashedPassword)
+
+	if err := repository.DB.Create(&user).Error; err != nil {
+		return Error(http.StatusInternalServerError, "faild to save user to database")
+	}
+
+	return Success(http.StatusCreated, "register successful")
+}
+
+func processLogin(c *gin.Context) *ServerResponse[string] {
 	var loginReq struct {
-		Username string `json:"username"`
+		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
 	c.ShouldBindJSON(&loginReq)
 
-	var user model.User
-	if err := repository.DB.Where("username = ?", loginReq.Username).First(&user).Error; err != nil {
-		c.JSON(401, gin.H{"error": "user not exist"})
-		return
+	if _, err := repository.GetUserByEmail(loginReq.Email); err != nil {
+		return Error(http.StatusBadRequest, "account not exist")
 	}
+
+	var user model.User
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginReq.Password)); err != nil {
-		c.JSON(401, gin.H{"error": "wrong passward"})
-		return
+		return Error(http.StatusBadRequest, "wrong password")
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -47,15 +70,6 @@ func Login(c *gin.Context) {
 		"exp":     time.Now().Add(24 * time.Hour).Unix(),
 	})
 	tokenString, _ := token.SignedString([]byte(os.Getenv("JWT_SECERT")))
-	c.JSON(200, gin.H{"token": tokenString})
-}
 
-func GetProfile(c *gin.Context) {
-	userID := c.MustGet("user_id").(uint)
-	var user model.User
-	if err := repository.DB.First(&user, userID).Error; err != nil {
-		c.JSON(404, gin.H{"error": "user not exist"})
-		return
-	}
-	c.JSON(200, gin.H{"username": user.Username, "email": user.Email})
+	return Success(http.StatusAccepted, tokenString)
 }
