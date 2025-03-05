@@ -1,6 +1,6 @@
 services:
   frontend:
-    build: ./come-front-vite
+    build: ./come-front
     ports:
       - "80:80"
     environment:

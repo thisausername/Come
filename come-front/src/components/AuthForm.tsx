@@ -1,113 +1,147 @@
-// import { FC } from 'react';
-// import { TextField, Button, Box, Typography } from '@mui/material';
-// 
-// interface AuthFormProps {
-//   type: 'login' | 'register';
-//   onSubmit: (email: string, password: string) => void;
-//   error?: string;
-// }
-// 
-// const AuthForm: FC<AuthFormProps> = ({ type, onSubmit, error }) => {
-//   const [email, setEmail] = useState('');
-//   const [password, setPassword] = useState('');
-// 
-//   return (
-//     <Box sx={{ maxWidth: 400, mx: 'auto', mt: 4 }}>
-//       <Typography variant="h4" align="center" gutterBottom>
-//         {type === 'login' ? 'Login' : 'Register'}
-//       </Typography>
-//       <TextField
-//         label="Email"
-//         fullWidth
-//         margin="normal"
-//         value={email}
-//         onChange={(e) => setEmail(e.target.value)}
-//       />
-//       <TextField
-//         label="Password"
-//         type="password"
-//         fullWidth
-//         margin="normal"
-//         value={password}
-//         onChange={(e) => setPassword(e.target.value)}
-//       />
-//       {error && (
-//         <Typography color="error" align="center" sx={{ mt: 2 }}>
-//           {error}
-//         </Typography>
-//       )}
-//       <Button
-//         variant="contained"
-//         fullWidth
-//         sx={{ mt: 2 }}
-//         onClick={() => onSubmit(email, password)}
-//       >
-//         {type === 'login' ? 'Login' : 'Register'}
-//       </Button>
-//     </Box>
-//   );
-// };
-// 
-// export default AuthForm;
+// src/components/AuthForm.tsx
 
-
-
-import React, { useState } from 'react';
+import { FC, useState } from 'react';
+import {
+  TextField,
+  Button,
+  Typography,
+  Link,
+  CircularProgress
+} from '@mui/material';
+import styles from '../styles/auth.module.css';
 
 interface AuthFormProps {
   type: 'login' | 'register';
-  onSubmit: (email: string, password: string) => void;
-  error?: string;
+  onSubmit: (
+    data: {
+      username?: string;
+      email: string;
+      password: string;
+      repeatPassword?: string;
+    }
+  ) => Promise<void>;
+  onSwitch: () => void;
+  loading?: boolean;
 }
 
-const AuthForm: React.FC<AuthFormProps> = ({ type, onSubmit, error }) => {
+const AuthForm: FC<AuthFormProps> = ({ type, onSubmit, onSwitch, loading }) => {
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [repeatPassword, setRepeatPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (type === 'register' && password !== confirmPassword) {
-      alert('Passwords do not match');
+    setError('')
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("invalid email format 😢");
       return;
     }
-    onSubmit(email, password);
+    if (type === 'register' && password !== repeatPassword) {
+      setError("passwords do not match 🤔");
+      return;
+    }
+    try {
+      if (type === 'register') {
+        await onSubmit({ username, email, password, repeatPassword });
+      } else {
+        await onSubmit({ email, password });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'request failed');
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="auth-form">
-      <div>
-        <label>Email:</label>
-        <input
-          type="email"
+    <div className={styles.container}>
+      <form className={styles.card} onSubmit={handleSubmit}>
+        <Typography variant="h4" className={styles.title}>
+          {type === 'login' ? '🎉 WelCome!' : '📝 Create Account'}
+        </Typography>
+
+        {type === 'register' && (
+          <TextField
+            label="Username"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+        )}
+
+        <TextField label="Email"
+          variant="outlined"
+          fullWidth
+          margin="normal"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-      </div>
-      <div>
-        <label>Password:</label>
-        <input
+
+        <TextField label="Password"
           type="password"
+          variant="outlined"
+          fullWidth
+          margin="normal"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-      </div>
-      {type === 'register' && (
-        <div>
-          <label>Confirm Password:</label>
-          <input
+
+        {type === 'register' && (
+          <TextField
+            label="Repeat Password"
             type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            value={repeatPassword}
+            onChange={(e) => setRepeatPassword(e.target.value)}
             required
           />
-        </div>
-      )}
-      {error && <div className="error">{error}</div>}
-      <button type="submit">{type === 'login' ? 'Login' : 'Register'}</button>
-    </form>
+        )}
+
+        {error && (
+          <Typography color="error" paragraph>
+            {error}
+          </Typography>
+        )}
+
+        <Button
+          type="submit"
+          variant="contained"
+          fullWidth
+          size="large"
+          disabled={loading}
+          sx={{ mt: 2 }}
+        >
+          {loading ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : type === 'login' ? (
+            'Sign In'
+          ) : (
+            'Sign Up'
+          )}
+        </Button>
+
+        <Typography className={styles.link}>
+          {type === 'login' ? (
+            <>
+              New comer? <Link onClick={onSwitch}>Sign up</Link>
+            </>
+          ) : (
+            <>
+              Already have an account? <Link onClick={onSwitch}>Sign In</Link>
+            </>
+          )}
+        </Typography>
+      </form>
+    </div>
   );
 };
 

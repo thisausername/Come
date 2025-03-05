@@ -1,23 +1,38 @@
+// src/pages/Login.tsx
+
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { login } from '../api/client';
+import { useNavigate  } from 'react-router-dom';
 import AuthForm from '../components/AuthForm';
+import { login } from '../api/client';
 
 const Login = () => {
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const handleSubmit = async (email: string, password: string) => {
-      console.log("Submit: email=" + email + " Password=" + password);
+  const handleSwitch = () => navigate('/register');
+  const handleSubmit = async (data: {email: string; password: string}) => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await login(data);
+      console.log('Login successful: ', response);
+      navigate('/dashboard');
+    } catch(err: any) {
+      setError(err.response?.data?.error || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="auth-page">
-      <AuthForm type="login" onSubmit={handleSubmit} error={error} />
-    </div>
+    <AuthForm
+      type="login"
+      onSubmit={handleSubmit}
+      onSwitch={handleSwitch}
+      loading={loading}
+    />
   );
 };
 
 export default Login;
-
-
