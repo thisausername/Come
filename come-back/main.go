@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"come-back/controller"
-	"come-back/middleware"
 	"come-back/repository"
 
 	"github.com/gin-gonic/gin"
@@ -13,14 +12,11 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load("/app/.env"); err != nil {
-		log.Fatal("Error loading .env file")
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("error loading .env file!")
 	}
 
 	if err := repository.InitMySQL(os.Getenv("MYSQL_DSN")); err != nil {
-		log.Fatal(err)
-	}
-	if err := repository.InitRedis(os.Getenv("REDIS_ADDR")); err != nil {
 		log.Fatal(err)
 	}
 
@@ -31,11 +27,11 @@ func main() {
 		public.POST("/login", controller.Login)
 	}
 
-	protected := public.Use(middleware.JwtAuth())
-	{
-		protected.GET("/profile", controller.GetProfile)
-		// protected.POST("/posts", controller.GreatePost)
-	}
+	// protected := public.Use(middleware.JwtAuth())
+	// {
+	// 	protected.GET("/profile", controller.GetProfile)
+	// 	// protected.POST("/posts", controller.GreatePost)
+	// }
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -43,5 +39,3 @@ func main() {
 	}
 	router.Run(":" + port)
 }
-
-
