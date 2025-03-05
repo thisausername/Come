@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -17,5 +18,3 @@ func InitMySQL(dsn string) error {
 	fmt.Println("MySQL connected")
 	return nil
 }
-
-
