@@ -4,11 +4,31 @@ import (
 	"come-back/model"
 )
 
-func GetUserByEmail(email string) (*model.User, error) {
+func QueryUserByEmail(email string) (*model.User, error) {
 	var user model.User
-	err := DB.Where("email = ?", email).First(&user).Error
+	err := dB.Where("email = ?", email).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func QueryAllUsers() ([]model.User, error) {
+	var users []model.User
+	if err := dB.Find(&users).Error; err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
+func CreateUser(user *model.User) error {
+	return dB.Create(user).Error
+}
+
+func UpdateUser(userID uint, updates map[string]any) error {
+	return dB.Model(&model.User{}).Where("id = ?", userID).Updates(updates).Error
+}
+
+func DeleteUser(userId uint) error {
+	return dB.Where("id = ?", userId).Delete(&model.User{}).Error
 }

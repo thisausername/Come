@@ -7,11 +7,11 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB *gorm.DB
+var dB *gorm.DB
 
 func InitMySQL(dsn string) error {
 	var err error
-	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	dB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return fmt.Errorf("MySQL connection failed: %v", err)
 	}
