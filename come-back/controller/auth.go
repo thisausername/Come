@@ -32,7 +32,7 @@ func processRegister(c *gin.Context) *ServerResponse[string] {
 		return Error(http.StatusBadRequest, "missing required registration information")
 	}
 
-	if _, err := repository.GetUserByEmail(user.Email); err == nil {
+	if _, err := repository.QueryUserByEmail(user.Email); err == nil {
 		return Error(http.StatusConflict, "email already in use")
 	}
 
@@ -42,7 +42,7 @@ func processRegister(c *gin.Context) *ServerResponse[string] {
 	}
 	user.Password = string(hashedPassword)
 
-	if err := repository.DB.Create(&user).Error; err != nil {
+	if repository.CreateUser(&user) != nil {
 		return Error(http.StatusInternalServerError, "faild to save user to database")
 	}
 
@@ -56,17 +56,18 @@ func processLogin(c *gin.Context) *ServerResponse[string] {
 	}
 	c.ShouldBindJSON(&loginReq)
 
-	if _, err := repository.GetUserByEmail(loginReq.Email); err != nil {
+	user, err := repository.QueryUserByEmail(loginReq.Email)
+	if err != nil {
 		return Error(http.StatusBadRequest, "account not exist")
 	}
 
-	var user model.User
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginReq.Password)); err != nil {
 		return Error(http.StatusBadRequest, "wrong password")
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.ID,
+		"role":    user.Role,
 		"exp":     time.Now().Add(24 * time.Hour).Unix(),
 	})
 	tokenString, _ := token.SignedString([]byte(os.Getenv("JWT_SECERT")))

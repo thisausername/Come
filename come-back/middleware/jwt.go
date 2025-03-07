@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"come-back/model"
 	"net/http"
 	"os"
 
@@ -8,7 +9,15 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func JwtAuth() gin.HandlerFunc {
+func UserAuth() gin.HandlerFunc {
+	return jwtAuth(model.RoleUser)
+}
+
+func AdminAuth() gin.HandlerFunc {
+	return jwtAuth(model.RoleAdmin)
+}
+
+func jwtAuth(role model.UserRole) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString := c.GetHeader("Authorization")
 		if tokenString == "" {
@@ -19,13 +28,25 @@ func JwtAuth() gin.HandlerFunc {
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			return []byte(os.Getenv("JWT_SECRET")), nil
 		})
-		if !token.Valid || err != nil {
+		if err != nil || !token.Valid {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid token"})
 			return
 		}
 
-		claims := token.Claims.(jwt.MapClaims)
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token claim"})
+			return
+		}
+
+		role := claims["role"].(model.UserRole)
+		if role != model.RoleAdmin {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+			return
+		}
+
 		c.Set("user_id", claims["user_id"])
+		c.Set("role", int(claims["role"].(float64)))
 		c.Next()
 	}
 }
