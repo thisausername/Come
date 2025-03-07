@@ -28,6 +28,6 @@ func GetAllUser(c *gin.Context) {
 	}
 }
 
-// func AdminDashboard(c *gin.Context) {
+func AdminDashboard(c *gin.Context) {
 
-// }
+}

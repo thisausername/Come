@@ -21,12 +21,18 @@ func QueryAllUsers() ([]model.User, error) {
 	return users, nil
 }
 
+func QueryUser(userId uint) (model.User, error) {
+	var user model.User
+	err := dB.Where("id = ?", userId).First(&user).Error
+	return user, err
+}
+
 func CreateUser(user *model.User) error {
 	return dB.Create(user).Error
 }
 
-func UpdateUser(userID uint, updates map[string]any) error {
-	return dB.Model(&model.User{}).Where("id = ?", userID).Updates(updates).Error
+func UpdateUser(userId uint, updates map[string]any) error {
+	return dB.Model(&model.User{}).Where("id = ?", userId).Updates(updates).Error
 }
 
 func DeleteUser(userId uint) error {

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthForm from '../components/AuthForm';
-import { register } from '../api/client';
+import { register } from '../api/auth';
 
 const Register = () => {
   const [loading, setLoading] = useState(false);
@@ -11,7 +11,6 @@ const Register = () => {
   const navigate = useNavigate();
   
   const handleSwitch = () => navigate('/login');
-
   const handleSubmit = async (
     data: {
       username?: string;
@@ -35,7 +34,7 @@ const Register = () => {
       });
 
       console.log('Registration successful: ', response);
-      navigate('/dashboard');
+      navigate('/login');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Registration failed');
     } finally {

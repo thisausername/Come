@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useNavigate  } from 'react-router-dom';
 import AuthForm from '../components/AuthForm';
-import { login } from '../api/client';
+import { login, LoginPayload } from '../api/auth';
+import { jwtDecode } from 'jwt-decode';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -15,9 +16,12 @@ const Login = () => {
     setLoading(true);
     setError('');
     try {
-      const response = await login(data);
-      console.log('Login successful: ', response);
-      navigate('/dashboard');
+      const token = await login(data);
+      console.log('Login successful: ', token);
+      const decoded = jwtDecode<LoginPayload>(token);
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", decoded.role.toString()); 
+      navigate('/profile');
     } catch(err: any) {
       setError(err.response?.data?.error || 'Login failed');
     } finally {

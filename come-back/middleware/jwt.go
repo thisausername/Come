@@ -17,7 +17,7 @@ func AdminAuth() gin.HandlerFunc {
 	return jwtAuth(model.RoleAdmin)
 }
 
-func jwtAuth(role model.UserRole) gin.HandlerFunc {
+func jwtAuth(allow_role model.UserRole) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString := c.GetHeader("Authorization")
 		if tokenString == "" {
@@ -39,14 +39,15 @@ func jwtAuth(role model.UserRole) gin.HandlerFunc {
 			return
 		}
 
-		role := claims["role"].(model.UserRole)
-		if role != model.RoleAdmin {
+		user_id := uint(claims["user_id"].(float64))
+		role := model.UserRole(int(claims["role"].(float64)))
+		if role != allow_role {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden"})
 			return
 		}
 
-		c.Set("user_id", claims["user_id"])
-		c.Set("role", int(claims["role"].(float64)))
+		c.Set("user_id", user_id)
+		c.Set("role", role)
 		c.Next()
 	}
 }
