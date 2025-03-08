@@ -1,3 +1,5 @@
+// src/pages/Profile.tsx
+
 import { getProfile } from "../api/user";
 import { UserRole } from "../constants/roles";
 import { useEffect, useState } from "react";
@@ -12,17 +14,12 @@ interface UserProfile {
 const Profile = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
 
-  console.log("Profile: ", user);
   useEffect(() => {
-    console.log("Calling getProfile...");
     getProfile().then(
-      (data) => {
-        setUser(data);
-      }
+      (data) => setUser(data)
     ).catch(console.error);
   }, []);
 
-  console.log(user)
   if (!user) {
     return <p>Loading profile...</p>;
   }

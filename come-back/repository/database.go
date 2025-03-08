@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"come-back/model"
 	"fmt"
 
 	"gorm.io/driver/mysql"
@@ -16,5 +17,5 @@ func InitMySQL(dsn string) error {
 		return fmt.Errorf("MySQL connection failed: %v", err)
 	}
 	fmt.Println("MySQL connected")
-	return nil
+	return dB.AutoMigrate(&model.User{}, &model.Post{})
 }

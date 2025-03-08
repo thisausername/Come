@@ -6,15 +6,17 @@ import Register from './pages/Register';
 import AdminDashboard from './pages/AdminDashboard';
 import ProtectedRouter from './components/ProtectedRouter';
 import Profile from './pages/Profile';
+import Home from './pages/Home';
 import { UserRole } from './constants/roles';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="*" element={<Login />} />
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="*" element={<div>404 - Page Not Found</div>} />
 
         <Route element={<ProtectedRouter />}>
           <Route path="/profile" element={<Profile />} />

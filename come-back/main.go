@@ -26,21 +26,25 @@ func main() {
 	{
 		public.POST("/register", controller.Register)
 		public.POST("/login", controller.Login)
+		public.GET("/posts", controller.GetAllPost)
 	}
 
 	test := router.Group("/test")
 	{
 		test.GET("/users", controller.GetAllUser)
+		test.POST("/post", controller.Post)
 	}
 
 	user := router.Group("/user").Use(middleware.UserAuth())
 	{
 		user.GET("/profile", controller.GetProfile)
+		user.POST("/post", controller.Post)
 	}
 
 	admin := router.Group("/admin").Use(middleware.AdminAuth())
 	{
 		admin.GET("/dashboard", controller.AdminDashboard)
+		admin.GET("/users", controller.GetAllUser)
 	}
 
 	port := os.Getenv("PORT")
