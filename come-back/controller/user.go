@@ -42,13 +42,13 @@ func Post(c *gin.Context) {
 }
 
 func processPost(c *gin.Context) *ServerResponse[string] {
-	authorID, exists := c.Get("userID")
+	authorID, exists := c.Get("user_id")
 	if !exists {
 		return Error(http.StatusUnauthorized, "user not authenticated")
 	}
 
 	var postInput struct {
-		Title   string `json:"title" binding:"required,max=100"`
+		Title   string `json:"title" binding:"required,max=50"`
 		Content string `json:"content" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&postInput); err != nil {

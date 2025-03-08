@@ -8,6 +8,7 @@ import ProtectedRouter from './components/ProtectedRouter';
 import Profile from './pages/Profile';
 import Home from './pages/Home';
 import { UserRole } from './constants/roles';
+import CreatePost from './components/CreatePost';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
 
         <Route element={<ProtectedRouter />}>
           <Route path="/profile" element={<Profile />} />
+          <Route path="/post" element={<CreatePost />} />
         </Route>
 
         <Route element={<ProtectedRouter requiredRole={UserRole.Admin} />}>
