@@ -3,6 +3,7 @@ package controller
 import (
 	"come-back/model"
 	"come-back/repository"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -83,4 +84,62 @@ func processPost(c *gin.Context) *ServerResponse[string] {
 	}
 
 	return Success(http.StatusCreated, "post successful")
+}
+
+func GetPostComments(c *gin.Context) {
+	postIDStr := c.Param("id")
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil {
+		log.Printf("Invalid post ID: %v", err)
+		c.JSON(http.StatusBadRequest, Error(http.StatusBadRequest, "invalid post ID"))
+		return
+	}
+
+	comments, err := repository.QueryAllComments(uint(postID))
+	if err != nil {
+		log.Printf("Failed to fetch comments for post %d: %v", postID, err)
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to fetch comments"))
+		return
+	}
+
+	c.JSON(http.StatusOK, Success(http.StatusOK, comments))
+}
+
+func CreateComment(c *gin.Context) {
+	postIDStr := c.Param("id")
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil {
+		log.Printf("Invalid post ID: %v", err)
+		c.JSON(http.StatusBadRequest, Error(http.StatusBadRequest, "invalid post ID"))
+		return
+	}
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, Error(http.StatusUnauthorized, "user not authenticated"))
+		return
+	}
+
+	var input struct {
+		Content string `json:"content" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		log.Printf("Invalid request: %v", err)
+		c.JSON(http.StatusBadRequest, Error(http.StatusBadRequest, "invalid request"))
+		return
+	}
+
+	comment := model.Comment{
+		PostID:   uint(postID),
+		AuthorID: userID.(uint),
+		Content:  input.Content,
+	}
+
+	if repository.CreateComment(&comment) != nil {
+		log.Printf("Failed to create comment: %v", err)
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to create comment"))
+		return
+	}
+
+	c.JSON(http.StatusCreated, Success(http.StatusCreated, comment))
 }

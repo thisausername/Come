@@ -28,17 +28,20 @@ func main() {
 		public.POST("/register", controller.Register)
 		public.GET("/posts", controller.GetAllPost)
 		public.GET("/post/:id", controller.GetPost)
+		public.GET("/post/:id/comments", controller.GetPostComments)
 	}
 
 	test := router.Group("/test")
 	{
 		test.GET("/users", controller.GetAllUser)
+		test.GET("/posts", controller.GetAllPost)
 	}
 
 	user := router.Group("/user").Use(middleware.UserAuth())
 	{
 		user.GET("/profile", controller.GetProfile)
 		user.POST("/post", controller.Post)
+		user.POST("/post/:id/comment", controller.CreateComment)
 	}
 
 	admin := router.Group("/admin").Use(middleware.AdminAuth())

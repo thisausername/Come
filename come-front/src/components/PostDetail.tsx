@@ -14,14 +14,8 @@ import {
   ListItemText,
 } from '@mui/material';
 import Navbar from './Navbar';
-import { Post, getPost } from '../api/post';
-
-interface Comment {
-  id: number;
-  content: string;
-  authorId: number;
-  createdAt: string;
-}
+import { Post, Comment, getPost, getPostComments } from '../api/post';
+import { createComment } from '../api/user';
 
 const PostDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -41,13 +35,11 @@ const PostDetail: React.FC = () => {
       }
 
       try {
-        console.log("get post calling... id =", parseInt(id, 10));
-        const postData = await getPost(parseInt(id, 10));
+        const postId = parseInt(id, 10)
+        const postData = await getPost(postId);
+        const commentData = await getPostComments(postId)
         setPost(postData);
-        // TODO: fetch comments from backend
-        setComments([
-          { id: 1, content: "Great post!", authorId: 2, createdAt: "2025-03-09T12:00:00Z" },
-        ]);
+        setComments(commentData);
       } catch (err: any) {
         setError(err.response?.data?.error || 'Failed to load post');
         console.error(err);
@@ -63,17 +55,17 @@ const PostDetail: React.FC = () => {
     navigate(-1);
   };
 
-  const handleCommentSubmit = () => {
-    if (!newComment.trim()) return;
-    // TODO: comment function
-    const newCommentObj: Comment = {
-      id: comments.length + 1,
-      content: newComment,
-      authorId: 1,
-      createdAt: new Date().toISOString(),
-    };
-    setComments([...comments, newCommentObj]);
-    setNewComment('');
+  const handleCommentSubmit = async () => {
+    if (!newComment.trim() || !id) return;
+    try {
+      const postId = parseInt(id, 10);
+      const comment = await createComment(postId, newComment);
+      setComments([...comments, comment]);
+      setNewComment('');
+    } catch (err: any) {
+      setError(err.message || 'Failed to submit comment');
+      console.error(err)
+    }
   };
 
   if (loading) {

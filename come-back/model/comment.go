@@ -2,11 +2,11 @@ package model
 
 import "time"
 
-type Post struct {
+type Comment struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
-	Title     string    `gorm:"not null" json:"title"`
-	Content   string    `gorm:"type:text;not null" json:"content"`
+	PostID    uint      `gorm:"not null;index" json:"postId"`
 	AuthorID  uint      `gorm:"not null;index" json:"authorId"`
+	Content   string    `gorm:"type:text;not null" json:"content"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 }

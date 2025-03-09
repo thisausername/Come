@@ -1,7 +1,7 @@
 // src/api/user.ts
 
 import axios from "axios";
-import { Post } from "./post"
+import { Post, Comment } from "./post"
 
 const user_api = axios.create({
     baseURL: '/user/',
@@ -27,3 +27,12 @@ export const createPost = async (post: {title: string; content: string}): Promis
   });
   return response.data.data;
 }
+
+export const createComment = async (postId: number, content: string): Promise<Comment> => {
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error("No authentication token found");
+  const response = await user_api.post(`post/${postId}/comment`, { content }, {
+    headers: { Authorization: token },
+  });
+  return response.data.data;
+};
