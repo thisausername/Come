@@ -24,15 +24,15 @@ func main() {
 	router := gin.Default()
 	public := router.Group("/api")
 	{
-		public.POST("/register", controller.Register)
 		public.POST("/login", controller.Login)
+		public.POST("/register", controller.Register)
 		public.GET("/posts", controller.GetAllPost)
+		public.GET("/post/:id", controller.GetPost)
 	}
 
 	test := router.Group("/test")
 	{
 		test.GET("/users", controller.GetAllUser)
-		test.POST("/post", controller.Post)
 	}
 
 	user := router.Group("/user").Use(middleware.UserAuth())

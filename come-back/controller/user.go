@@ -4,6 +4,7 @@ import (
 	"come-back/model"
 	"come-back/repository"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -34,6 +35,23 @@ func GetAllPost(c *gin.Context) {
 		code := http.StatusAccepted
 		c.JSON(code, Success(code, users))
 	}
+}
+
+func GetPost(c *gin.Context) {
+	postIDStr := c.Param("id")
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, Error(http.StatusBadRequest, "invalid post ID"))
+		return
+	}
+
+	post, err := repository.QueryPost(uint(postID))
+	if err != nil {
+		c.JSON(http.StatusNotFound, Error(http.StatusNotFound, "post not found"))
+		return
+	}
+
+	c.JSON(http.StatusOK, Success(http.StatusOK, post))
 }
 
 func Post(c *gin.Context) {

@@ -4,7 +4,7 @@ import axios from "axios";
 import { Post } from "./post"
 
 const user_api = axios.create({
-    baseURL: 'user/',
+    baseURL: '/user/',
     headers: {'Content-Type': 'application/json'},
 });
 
@@ -22,9 +22,8 @@ export const createPost = async (post: {title: string; content: string}): Promis
   if (!token) {
     throw new Error("No authentication token found");
   }
-  const response = await user_api.post('post/', post, {
+  const response = await user_api.post('post', post, {
     headers: { Authorization: `${token}` },
   });
   return response.data.data;
 }
-

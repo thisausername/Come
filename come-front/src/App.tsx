@@ -9,6 +9,7 @@ import Profile from './pages/Profile';
 import Home from './pages/Home';
 import { UserRole } from './constants/roles';
 import CreatePost from './components/CreatePost';
+import PostDetail from './components/PostDetail';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/post/:id" element={<PostDetail />} />
         <Route path="*" element={<div>404 - Page Not Found</div>} />
 
         <Route element={<ProtectedRouter />}>

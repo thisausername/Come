@@ -12,7 +12,7 @@ export interface Post {
 }
 
 const post_api = axios.create({
-  baseURL: 'api/',
+  baseURL: '/api/',
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -21,3 +21,8 @@ export const getPosts = async (): Promise<Post[]> => {
   return response.data.data;
 };
 
+export const getPost = async (id: number): Promise<Post> => {
+  console.log("url = ", post_api.getUri() + `post/${id}`)
+  const response = await post_api.get(`post/${id}`, {});
+  return response.data.data;
+}

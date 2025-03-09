@@ -1,6 +1,7 @@
 // src/components/PostList.tsx
 
 import { useState, useEffect, FC } from 'react';
+import { Link } from 'react-router-dom';
 import { List, ListItem, ListItemText, Typography } from '@mui/material';
 import { getPosts, Post } from '../api/post';
 
@@ -34,7 +35,14 @@ const PostList: FC = () => {
             posts.map((post) => (
               <ListItem key={post.id} divider>
                 <ListItemText
-                  primary={post.title}
+                  primary={
+                    <Link
+                      to={`/post/${post.id}`}
+                      style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                      {post.title}
+                    </Link>
+                  }
                   secondary={
                     <>
                       <Typography variant="body2" color="textSecondary">
