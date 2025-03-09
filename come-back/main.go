@@ -22,6 +22,8 @@ func main() {
 	}
 
 	router := gin.Default()
+	router.Static("/uploads", "./uploads")
+
 	public := router.Group("/api")
 	{
 		public.POST("/login", controller.Login)
@@ -39,9 +41,14 @@ func main() {
 
 	user := router.Group("/user").Use(middleware.UserAuth())
 	{
-		user.GET("/profile", controller.GetProfile)
 		user.POST("/post", controller.Post)
 		user.POST("/post/:id/comment", controller.CreateComment)
+
+		user.GET("/profile", controller.GetProfile)
+		user.POST("/avatar", func(c *gin.Context) {
+			resp := controller.UploadAvatar(c)
+			c.JSON(resp.Code, resp)
+		})
 	}
 
 	admin := router.Group("/admin").Use(middleware.AdminAuth())

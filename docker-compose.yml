@@ -17,6 +17,7 @@ services:
       - "8080:8080"
     volumes:
       - ./.env:/app/.env
+      - ./uploads:/app/uploads
     environment:
       - MYSQL_DSN=${MYSQL_DSN}
       - REDIS_ADDR=${REDIS_ADDR}

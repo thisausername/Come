@@ -4,13 +4,8 @@ import { AppBar, Toolbar, Typography, Button, Avatar, Tooltip } from '@mui/mater
 import { FC, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getProfile } from '../api/user';
+import { UserProfile } from '../pages/Profile';
 
-interface UserProfile {
-  id: number;
-  email: string;
-  username: string;
-  role: number;
-}
 
 const Navbar: FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -23,9 +18,16 @@ const Navbar: FC = () => {
         .catch((error) => {
           console.error('Failed to fetch profile:', error);
           localStorage.removeItem('token');
+          setUser(null)
         });
     }
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+    window.location.href = '/login';
+  }
 
   return (
     <AppBar position="static">
@@ -52,16 +54,17 @@ const Navbar: FC = () => {
         {user ? (
           <Tooltip title={user.username}>
             <Avatar
+              src={user.avatar}
               component={Link}
               to="/profile"
               sx={{
-                bgcolor: 'primary.main',
+                bgcolor: !user.avatar ? 'primary.main' : undefined,
                 width: 36,
                 height: 36,
                 textDecoration: 'none',
               }}
             >
-              {user.username[0].toUpperCase()}
+              {!user.avatar && user.username[0].toUpperCase()}
             </Avatar>
           </Tooltip>
         ) : (

@@ -1,8 +1,8 @@
 // src/pages/Profile.tsx
 
-import { getProfile } from "../api/user";
+import { getProfile, uploadAvatar } from "../api/user";
 import { UserRole } from "../constants/roles";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import {
   Avatar,
   Box,
@@ -14,22 +14,45 @@ import {
 } from "@mui/material";
 import { Link } from "react-router-dom";
 
-interface UserProfile {
+export interface UserProfile {
   id: number;
   email: string;
   username: string;
+  avatar: string;
   role: UserRole;
 }
 
 const Profile = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchProfile = async () => {
+    try {
+      const data = await getProfile();
+      setUser(data);
+    } catch (error) {
+      console.error("Failed to load profile:", error);
+    }
+  };
 
   useEffect(() => {
-    getProfile()
-      .then((data) => setUser(data))
-      .catch((error) => console.error("Failed to load profile:", error));
+    fetchProfile();
   }, []);
 
+  const handleAvatarChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const avatarUrl = await uploadAvatar(file);
+      setUser((prev) => prev ? {...prev, avatar: avatarUrl} : null);
+      setError(null);
+      await fetchProfile();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to upload avatar");
+      console.error(err);
+    }
+  };
   if (!user) {
     return (
       <Container sx={{ textAlign: "center", mt: 4 }}>
@@ -37,21 +60,22 @@ const Profile = () => {
       </Container>
     );
   }
-
+  
   return (
     <Container maxWidth="sm" sx={{ mt: 4, mb: 4 }}>
       <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
         <CardContent>
           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mb: 3 }}>
             <Avatar
+              src={user.avatar || undefined}
               sx={{
                 width: 80,
                 height: 80,
-                bgcolor: "primary.main",
+                bgcolor: !user.avatar ? "primary.main" : undefined,
                 mb: 2,
               }}
             >
-              {user.username[0].toUpperCase()}
+              {!user.avatar && user.username[0].toUpperCase()}
             </Avatar>
             <Typography variant="h4" component="h1" gutterBottom>
               User Profile
@@ -71,6 +95,18 @@ const Profile = () => {
           </Box>
 
           <Box sx={{ mt: 3, textAlign: "center" }}>
+            <input
+              accept="image/jpeg,image/png"
+              style={{ display: "none" }}
+              id="avatar-upload"
+              type="file"
+              onChange={handleAvatarChange}
+            />
+            <label htmlFor="avatar-upload">
+              <Button variant="contained" component="span" sx={{ mr: 2 }}>
+                Upload Avatar
+              </Button>
+            </label>
             <Button
               variant="contained"
               color="primary"
@@ -81,6 +117,11 @@ const Profile = () => {
               Back to Home
             </Button>
           </Box>
+          {error && (
+            <Typography color="error" sx={{ mt: 2, textAlign: "center" }}>
+              {error}
+            </Typography>
+          )}
         </CardContent>
       </Card>
     </Container>

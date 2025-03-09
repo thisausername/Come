@@ -11,7 +11,7 @@ const user_api = axios.create({
 export const getProfile = async () => {
   const token = localStorage.getItem("token");
   const response = await user_api.get('profile', {
-    headers: { Authorization: `${token}` },
+    headers: { Authorization: token },
   });
   const user = response.data.data;
   return user;
@@ -23,7 +23,7 @@ export const createPost = async (post: {title: string; content: string}): Promis
     throw new Error("No authentication token found");
   }
   const response = await user_api.post('post', post, {
-    headers: { Authorization: `${token}` },
+    headers: { Authorization: token },
   });
   return response.data.data;
 }
@@ -36,3 +36,20 @@ export const createComment = async (postId: number, content: string): Promise<Co
   });
   return response.data.data;
 };
+
+export const uploadAvatar = async (file: File): Promise<string> => {
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error("No authentication token found");
+
+  const formData = new FormData();
+  formData.append('avatar', file);
+
+  const response = await user_api.post('/avatar', formData, {
+    headers: {
+      Authorization: token,
+      'Content-Type': 'multipart/form-data',
+    }
+  });
+  return response.data.data;
+}
+
