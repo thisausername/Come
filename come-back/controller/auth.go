@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 func Register(c *gin.Context) {
@@ -23,27 +24,34 @@ func Login(c *gin.Context) {
 }
 
 func processRegister(c *gin.Context) *ServerResponse[string] {
-	var user model.User
+	var req model.RegisterRequest
 
-	if err := c.ShouldBindJSON(&user); err != nil {
+	if err := c.ShouldBindJSON(&req); err != nil {
 		return Error(http.StatusBadRequest, "wrong request format")
 	}
-	if user.Email == "" || user.Username == "" || user.Password == "" {
+	if req.Email == "" || req.Username == "" || req.Password == "" {
 		return Error(http.StatusBadRequest, "missing required registration information")
 	}
 
-	if _, err := repository.QueryUserByEmail(user.Email); err == nil {
+	if _, err := repository.QueryUserByEmail(req.Email); err == nil {
 		return Error(http.StatusConflict, "email already in use")
+	} else if err != gorm.ErrRecordNotFound {
+		return Error(http.StatusInternalServerError, "database error")
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return Error(http.StatusInternalServerError, "failed to hash password")
 	}
-	user.Password = string(hashedPassword)
+
+	user := model.User{
+		Email:    req.Email,
+		Username: req.Username,
+		Password: string(hashedPassword),
+	}
 
 	if repository.CreateUser(&user) != nil {
-		return Error(http.StatusInternalServerError, "faild to save user to database")
+		return Error(http.StatusInternalServerError, "failed to save user")
 	}
 
 	return Success(http.StatusCreated, "register successful")
