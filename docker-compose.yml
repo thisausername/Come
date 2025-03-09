@@ -39,7 +39,6 @@ services:
       MYSQL_TZINFO_TO_SQL: "false"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -u root -p$$MYSQL_ROOT_PASSWORD"]
       interval: 5s
