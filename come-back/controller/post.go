@@ -21,6 +21,35 @@ func GetAllPost(c *gin.Context) {
 	}
 }
 
+func GetPostsPaginated(c *gin.Context) {
+	pageStr := c.DefaultQuery("page", "1")
+	pageSizeStr := c.DefaultQuery("pageSize", "10")
+	page, _ := strconv.Atoi(pageStr)
+	pageSize, _ := strconv.Atoi(pageSizeStr)
+
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 10
+	}
+
+	offset := (page - 1) * pageSize
+	posts, total, err := repository.QueryPostsPaginated(offset, pageSize)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to fetch posts"))
+	}
+
+	c.JSON(
+		http.StatusOK,
+		Success(http.StatusOK, map[string]any{
+			"posts":    posts,
+			"total":    total,
+			"page":     page,
+			"pageSize": pageSize,
+		}))
+}
+
 func GetPost(c *gin.Context) {
 	postIDStr := c.Param("id")
 	postID, err := strconv.Atoi(postIDStr)

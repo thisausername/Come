@@ -14,6 +14,18 @@ func QueryPost(postId uint) (model.Post, error) {
 	return post, err
 }
 
+func QueryPostsPaginated(offset, limit int) ([]model.Post, int64, error) {
+	var posts []model.Post
+	var total int64
+	if err := dB.Model(&model.Post{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	if err := dB.Offset(offset).Limit(limit).Order("created_at DESC").Find(&posts).Error; err != nil {
+		return nil, 0, err
+	}
+	return posts, total, nil
+}
+
 func CreatePost(post *model.Post) error {
 	return dB.Create(post).Error
 }

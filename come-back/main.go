@@ -28,7 +28,7 @@ func main() {
 	{
 		public.POST("/login", controller.Login)
 		public.POST("/register", controller.Register)
-		public.GET("/posts", controller.GetAllPost)
+		public.GET("/posts", controller.GetPostsPaginated)
 		public.GET("/post/:id", controller.GetPost)
 		public.GET("/post/:id/comments", controller.GetPostComments)
 	}
