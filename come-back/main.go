@@ -35,12 +35,13 @@ func main() {
 			public.GET("/post/:id", controller.GetPost)
 			public.GET("/post/:id/comments", controller.GetPostComments)
 
+			public.GET("/user/:id", controller.GetUser)
 			public.GET("/users/batch", controller.GetUsersBatch)
 		}
 
 		auth := api.Group("").Use(middleware.UserAuth())
 		{
-			auth.GET("/profile", controller.GetUser)
+			auth.GET("/profile", controller.GetProfile)
 			auth.PUT("/profile", controller.UpdateProfile)
 			auth.POST("/avatar", controller.UploadAvatar)
 

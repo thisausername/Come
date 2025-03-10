@@ -3,8 +3,7 @@
 import { AppBar, Toolbar, Typography, Button, Avatar, Menu, MenuItem, Tooltip } from '@mui/material';
 import { FC, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getProfile } from '../api/user';
-import { UserProfile } from '../pages/Profile';
+import { getProfile, UserProfile } from '../api/user';
 
 const Navbar: FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);

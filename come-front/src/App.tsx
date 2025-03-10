@@ -20,6 +20,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/post/:id" element={<PostDetail />} />
+        <Route path="/user/:id" element={<Profile />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="*" element={<div>404 - Page Not Found</div>} />
 

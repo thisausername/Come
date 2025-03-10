@@ -14,12 +14,16 @@ import {
 import { Link } from "react-router-dom";
 import { getPostsPaginated, Post } from "../api/post";
 import { getUsersBatch } from "../api/user";
+import { jwtDecode } from "jwt-decode";
 
 const PostList = () => {
   const [posts, setPosts] = useState<(Post & { authorUsername: string; avatar: string })[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const pageSize = 10;
+  
+  const token = localStorage.getItem("token");
+  const currentUserId = token ? (jwtDecode<{ user_id: number }>(token).user_id) : null;
 
   const fetchPostsAndUsers = async (currentPage: number) => {
     try {
@@ -80,12 +84,20 @@ const PostList = () => {
               py: 2,
             }}
           >
-            <Avatar
-              src={post.avatar ? `/${post.avatar}` : undefined}
-              sx={{ width: 40, height: 40, mr: 2 }}
-            >
-              {!post.avatar && post.authorUsername[0].toUpperCase()}
-            </Avatar>
+            <Link to={ currentUserId === post.authorId ? "/profile" : `/user/${post.authorId}` } style={{ textDecoration: "none" }}>
+              <Avatar
+                src={post.avatar ? `/${post.avatar}` : undefined}
+                sx={{
+                  width: 40,
+                  height: 40,
+                  mr: 2,
+                  cursor: "pointer",
+                  "&:hover": {border: "2px solid #1976d2"},
+                }}
+                >
+                {!post.avatar && post.authorUsername[0].toUpperCase()}
+              </Avatar>
+            </Link>
             <Box sx={{ flexGrow: 1 }}>
               <ListItemText
                 primary={post.title}

@@ -1,6 +1,6 @@
 // src/pages/Profile.tsx
 
-import { getProfile, updateProfile, uploadAvatar } from "../api/user";
+import { getProfile, getUser, updateProfile, uploadAvatar, UserProfile } from "../api/user";
 import { UserRole } from "../constants/roles";
 import { useEffect, useState, useRef } from "react";
 import {
@@ -14,18 +14,12 @@ import {
   TextField,
   Tooltip,
 } from "@mui/material";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { emailRegex } from "../constants/reg";
-
-export interface UserProfile {
-  id: number;
-  email: string;
-  username: string;
-  avatar: string;
-  role: UserRole;
-}
+import { jwtDecode } from "jwt-decode";
 
 const Profile = () => {
+  const { userId } = useParams<{ userId: string }>();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -33,14 +27,23 @@ const Profile = () => {
   const [email, setEmail] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const token = localStorage.getItem("token");
+  const currentUserId = token ? (jwtDecode<{ user_id: number }>(token).user_id) : null;
+  const isOwnProfile = userId ? parseInt(userId) === currentUserId : true;
+
   const fetchProfile = async () => {
     try {
-      const data = await getProfile();
+      let data: UserProfile;
+      if (userId) {
+        data = await getUser(parseInt(userId));
+      } else {
+        data = await getProfile();
+      }
       setUser(data);
       setUsername(data.username);
       setEmail(data.email);
     } catch (error) {
-      console.error("Failed to load profile:", error);
+      setError("Failed to laod profile")
     }
   };
 
@@ -52,7 +55,7 @@ const Profile = () => {
 
   const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file || !isOwnProfile) return;
     try {
       const avatarUrl = await uploadAvatar(file);
       setUser((prev) => prev ? { ...prev, avatar: avatarUrl } : null);
@@ -64,6 +67,7 @@ const Profile = () => {
   };
 
   const handleUpdateProfile = async () => {
+    if (!isOwnProfile) return;
     try {
       await updateProfile({username, email});
       setEditMode(false);
@@ -83,7 +87,7 @@ const Profile = () => {
       <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
         <CardContent>
           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mb: 3 }}>
-            <Tooltip title="Click to change avatar">
+            <Tooltip title="click to change avatar">
             <Avatar
               src={user.avatar}
               sx={{ 
@@ -91,10 +95,10 @@ const Profile = () => {
                 height: 80,
                 bgcolor: !user.avatar ? "primary.main" : undefined,
                 mb: 2,
-                cursor: "pointer",
-                "&:hover": { border: "2px solid #1976d2" }
+                cursor: isOwnProfile ? "pointer" : "default",
+                "&:hover": isOwnProfile ? { border: "2px solid #1976d2" } : {},
               }}
-              onClick={handleAvatarClick}
+              onClick={isOwnProfile ? handleAvatarClick : undefined}
               >
               {!user.avatar && user.username[0].toUpperCase()}
             </Avatar>
@@ -108,12 +112,12 @@ const Profile = () => {
               onChange={handleAvatarChange}
             />
             <Typography variant="h4" component="h1" gutterBottom>
-              User Profile
+              {isOwnProfile ? "Profile" : `${user.username}'s Profile`}
             </Typography>
           </Box>
 
           <Box sx={{ textAlign: "left" }}>
-            {editMode ? (
+            {editMode && isOwnProfile ? (
               <>
                 <TextField
                   label="Username"
@@ -129,8 +133,8 @@ const Profile = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   fullWidth
                   margin="normal"
-                  error={!email || emailRegex.test(email)}
-                  helperText={!email ? "Email is required" : emailRegex.test(email) ? "Invalid email format" : ""}
+                  error={!email || !emailRegex.test(email)}
+                  helperText={!email ? "Email is required" : !emailRegex.test(email) ? "Invalid email format" : ""}
                 />
                 <Box sx={{ mt: 2 }}>
                   <Button variant="contained" onClick={handleUpdateProfile} sx={{ mr: 2 }}>
@@ -143,12 +147,20 @@ const Profile = () => {
               </>
             ) : (
               <>
-                <Typography variant="h6" gutterBottom><strong>Username:</strong> {user.username}</Typography>
-                <Typography variant="h6" gutterBottom><strong>Email:</strong> {user.email}</Typography>
-                <Typography variant="h6" gutterBottom><strong>Role:</strong> {user.role === UserRole.Admin ? "Admin" : "User"}</Typography>
-                <Button variant="contained" onClick={() => setEditMode(true)} sx={{ mt: 2 }}>
-                  Edit Profile
-                </Button>
+                <Typography variant="h6" gutterBottom>
+                  <strong>Username:</strong> {user.username}
+                </Typography>
+                <Typography variant="h6" gutterBottom>
+                  <strong>Email:</strong> {user.email}
+                </Typography>
+                <Typography variant="h6" gutterBottom>
+                  <strong>Role:</strong> {user.role === UserRole.Admin ? "Admin" : "User"}
+                </Typography>
+                {isOwnProfile && (
+                  <Button variant="contained" onClick={() => setEditMode(true)} sx={{ mt: 2 }}>
+                    Edit
+                  </Button>
+                )}
               </>
             )}
           </Box>

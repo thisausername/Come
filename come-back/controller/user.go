@@ -15,6 +15,21 @@ import (
 )
 
 func GetUser(c *gin.Context) {
+	idStr := c.Param("id")
+	userID, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, Error(http.StatusBadRequest, "Invalid user id"))
+	}
+	user, err := repository.QueryUser(uint(userID))
+	if err != nil {
+		c.JSON(http.StatusNotFound, Error(http.StatusNotFound, "User not found"))
+		return
+	}
+
+	c.JSON(http.StatusOK, Success(http.StatusOK, user))
+}
+
+func GetProfile(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, Error(http.StatusUnauthorized, "Unauthorized"))
