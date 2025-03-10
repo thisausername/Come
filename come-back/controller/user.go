@@ -57,7 +57,37 @@ func GetUsersBatch(c *gin.Context) {
 	c.JSON(http.StatusOK, Success(http.StatusOK, userMap))
 }
 
-func UploadAvatar(c *gin.Context) *ServerResponse[string] {
+func UploadAvatar(c *gin.Context) {
+	response := uploadAvatar(c)
+	c.JSON(response.Code, response)
+}
+
+func UpdateProfile(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, Error(http.StatusUnauthorized, "user not authenticated"))
+	}
+
+	var input struct {
+		Username string `json:"username" binding:"required,max=50"`
+		Email    string `json:"email" binding:"required,email"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, Error(http.StatusBadRequest, "invalid request format: "+err.Error()))
+	}
+
+	updates := map[string]any{
+		"username": input.Username,
+		"email":    input.Email,
+	}
+	if err := repository.UpdateUser(userID.(uint), updates); err != nil {
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to update profile"))
+	}
+
+	c.JSON(http.StatusOK, Success(http.StatusOK, "profile updated successfully"))
+}
+
+func uploadAvatar(c *gin.Context) *ServerResponse[string] {
 	userID, exists := c.Get("user_id")
 	if !exists {
 		return Error(http.StatusUnauthorized, "user not authenticated")
@@ -106,29 +136,4 @@ func UploadAvatar(c *gin.Context) *ServerResponse[string] {
 	}
 
 	return Success(http.StatusOK, savePath)
-}
-
-func UpdateProfile(c *gin.Context) *ServerResponse[string] {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		return Error(http.StatusUnauthorized, "user not authenticated")
-	}
-
-	var input struct {
-		Username string `json:"username" binding:"required,max=50"`
-		Email    string `json:"email" binding:"required,email"`
-	}
-	if err := c.ShouldBindJSON(&input); err != nil {
-		return Error(http.StatusBadRequest, "invalid request format: "+err.Error())
-	}
-
-	updates := map[string]any{
-		"username": input.Username,
-		"email":    input.Email,
-	}
-	if err := repository.UpdateUser(userID.(uint), updates); err != nil {
-		return Error(http.StatusInternalServerError, "failed to update profile")
-	}
-
-	return Success(http.StatusOK, "profile updated successfully")
 }

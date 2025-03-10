@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import Navbar from './Navbar';
 import { Post, Comment, getPost, getPostComments } from '../api/post';
-import { createComment } from '../api/user';
+import { createComment } from '../api/post';
 
 const PostDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();

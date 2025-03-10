@@ -11,7 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import Navbar from './Navbar';
-import { createPost } from '../api/user';
+import { createPost } from '../api/post';
 import { Link } from 'react-router-dom';
 
 const CreatePost: React.FC<{ onPostCreated?: () => void }> = ({ onPostCreated }) => {

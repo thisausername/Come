@@ -3,7 +3,7 @@
 import { AppBar, Toolbar, Typography, Button, Avatar, Menu, MenuItem, Tooltip } from '@mui/material';
 import { FC, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getUser } from '../api/user';
+import { getProfile } from '../api/user';
 import { UserProfile } from '../pages/Profile';
 
 const Navbar: FC = () => {
@@ -13,7 +13,7 @@ const Navbar: FC = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      getUser()
+      getProfile()
         .then((data) => {
           setUser(data);
         })

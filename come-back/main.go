@@ -24,44 +24,29 @@ func main() {
 	router := gin.Default()
 	router.Static("/uploads", "./uploads")
 
-	public := router.Group("/api")
+	api := router.Group("/api")
 	{
-		public.POST("/login", controller.Login)
-		public.POST("/register", controller.Register)
+		public := api.Group("")
+		{
+			public.POST("/login", controller.Login)
+			public.POST("/register", controller.Register)
 
-		public.GET("/posts", controller.GetPostsPaginated)
-		public.GET("/post/:id", controller.GetPost)
-		public.GET("/post/:id/comments", controller.GetPostComments)
+			public.GET("/posts", controller.GetPostsPaginated)
+			public.GET("/post/:id", controller.GetPost)
+			public.GET("/post/:id/comments", controller.GetPostComments)
 
-		public.GET("/users/batch", controller.GetUsersBatch)
-	}
+			public.GET("/users/batch", controller.GetUsersBatch)
+		}
 
-	test := router.Group("/test")
-	{
-		test.GET("/users", controller.GetAllUser)
-		test.GET("/posts", controller.GetAllPost)
-	}
+		auth := api.Group("").Use(middleware.UserAuth())
+		{
+			auth.GET("/profile", controller.GetUser)
+			auth.PUT("/profile", controller.UpdateProfile)
+			auth.POST("/avatar", controller.UploadAvatar)
 
-	user := router.Group("/api").Use(middleware.UserAuth())
-	{
-		user.GET("/profile", controller.GetUser)
-		user.POST("/post", controller.CreatePost)
-		user.POST("/post/:id/comment", controller.CreateComment)
-
-		user.PUT("/profile", func(c *gin.Context) {
-			resp := controller.UpdateProfile(c)
-			c.JSON(resp.Code, resp)
-		})
-		user.POST("/avatar", func(c *gin.Context) {
-			resp := controller.UploadAvatar(c)
-			c.JSON(resp.Code, resp)
-		})
-	}
-
-	admin := router.Group("/admin").Use(middleware.AdminAuth())
-	{
-		admin.GET("/dashboard", controller.AdminDashboard)
-		admin.GET("/users", controller.GetAllUser)
+			auth.POST("/post", controller.CreatePost)
+			auth.POST("/post/:id/comment", controller.CreateComment)
+		}
 	}
 
 	port := os.Getenv("PORT")
