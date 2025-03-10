@@ -10,12 +10,20 @@ const user_api = axios.create({
 
 export const getProfile = async () => {
   const token = localStorage.getItem("token");
-  const response = await user_api.get('profile', {
+  const response = await user_api.get('/profile', {
     headers: { Authorization: token },
   });
-  const user = response.data.data;
-  return user;
+  const profile = response.data.data;
+  return profile;
 };
+
+export const updateProfile = async (updates: {username: string; email: string}) => {
+  const token = localStorage.getItem("token");
+  const response = await user_api.put('/profile', updates, {
+    headers: { Authorization: token },
+  });
+  return response.data.data;
+}
 
 export const createPost = async (post: {title: string; content: string}): Promise<Post> => {
   const token = localStorage.getItem('token');

@@ -24,29 +24,32 @@ func Login(c *gin.Context) {
 }
 
 func processRegister(c *gin.Context) *ServerResponse[string] {
-	var req model.RegisterRequest
-
-	if err := c.ShouldBindJSON(&req); err != nil {
+	var regReq struct {
+		Username string `json:"username" binding:"required"`
+		Email    string `json:"email" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&regReq); err != nil {
 		return Error(http.StatusBadRequest, "wrong request format")
 	}
-	if req.Email == "" || req.Username == "" || req.Password == "" {
+	if regReq.Email == "" || regReq.Username == "" || regReq.Password == "" {
 		return Error(http.StatusBadRequest, "missing required registration information")
 	}
 
-	if _, err := repository.QueryUserByEmail(req.Email); err == nil {
+	if _, err := repository.QueryUserByEmail(regReq.Email); err == nil {
 		return Error(http.StatusConflict, "email already in use")
 	} else if err != gorm.ErrRecordNotFound {
 		return Error(http.StatusInternalServerError, "database error")
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(regReq.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return Error(http.StatusInternalServerError, "failed to hash password")
 	}
 
 	user := model.User{
-		Email:    req.Email,
-		Username: req.Username,
+		Email:    regReq.Email,
+		Username: regReq.Username,
 		Password: string(hashedPassword),
 	}
 

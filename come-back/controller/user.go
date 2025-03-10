@@ -11,6 +11,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func GetProfile(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, Error(http.StatusUnauthorized, "Unauthorized"))
+		return
+	}
+
+	user, err := repository.QueryUser(userID.(uint))
+	if err != nil {
+		c.JSON(http.StatusNotFound, Error(http.StatusNotFound, "User not found"))
+		return
+	}
+
+	c.JSON(http.StatusOK, Success(http.StatusOK, user))
+}
+
 func UploadAvatar(c *gin.Context) *ServerResponse[string] {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -31,6 +47,12 @@ func UploadAvatar(c *gin.Context) *ServerResponse[string] {
 		return Error(http.StatusBadRequest, "only JPG and PNG files are allowed")
 	}
 
+	user, err := repository.QueryUser(userID.(uint))
+	if err != nil {
+		return Error(http.StatusInternalServerError, "failed to fetch user profile")
+	}
+	oldAvatarPath := user.Avatar
+
 	filename := fmt.Sprintf("%d_%s%s", userID, util.GenerateRandomString(8), ext)
 	savePath := filepath.Join("uploads/avatars", filename)
 
@@ -39,6 +61,7 @@ func UploadAvatar(c *gin.Context) *ServerResponse[string] {
 	}
 
 	if err := c.SaveUploadedFile(file, savePath); err != nil {
+		os.Remove(savePath)
 		return Error(http.StatusInternalServerError, "failed to save avatar")
 	}
 
@@ -46,22 +69,36 @@ func UploadAvatar(c *gin.Context) *ServerResponse[string] {
 		return Error(http.StatusInternalServerError, "failed to update avatar")
 	}
 
+	if oldAvatarPath != "" && oldAvatarPath != savePath {
+		if err := os.Remove(oldAvatarPath); err != nil {
+			fmt.Println("Failed to delete old avatar:", err)
+		}
+	}
+
 	return Success(http.StatusOK, savePath)
 }
 
-func GetProfile(c *gin.Context) {
+func UpdateProfile(c *gin.Context) *ServerResponse[string] {
 	userID, exists := c.Get("user_id")
-
 	if !exists {
-		c.JSON(http.StatusUnauthorized, Error(http.StatusUnauthorized, "Unauthorized"))
-		return
+		return Error(http.StatusUnauthorized, "user not authenticated")
 	}
 
-	user, err := repository.QueryUser(userID.(uint))
-	if err != nil {
-		c.JSON(http.StatusNotFound, Error(http.StatusNotFound, "User not found"))
-		return
+	var input struct {
+		Username string `json:"username" binding:"required,max=50"`
+		Email    string `json:"email" binding:"required,email"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		return Error(http.StatusBadRequest, "invalid request format: "+err.Error())
 	}
 
-	c.JSON(http.StatusOK, Success(http.StatusOK, user))
+	updates := map[string]any{
+		"username": input.Username,
+		"email":    input.Email,
+	}
+	if err := repository.UpdateUser(userID.(uint), updates); err != nil {
+		return Error(http.StatusInternalServerError, "failed to update profile")
+	}
+
+	return Success(http.StatusOK, "profile updated successfully")
 }

@@ -9,6 +9,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import styles from '../styles/auth.module.css';
+import { emailRegex } from '../constants/reg';
 
 interface AuthFormProps {
   type: 'login' | 'register';
@@ -35,7 +36,6 @@ const AuthForm: FC<AuthFormProps> = ({ type, onSubmit, onSwitch, loading }) => {
     e.preventDefault();
     setError('')
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError("invalid email format 😢");
       return;

@@ -1,14 +1,14 @@
 // src/components/Navbar.tsx
 
-import { AppBar, Toolbar, Typography, Button, Avatar, Tooltip } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Avatar, Menu, MenuItem, Tooltip } from '@mui/material';
 import { FC, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getProfile } from '../api/user';
 import { UserProfile } from '../pages/Profile';
 
-
 const Navbar: FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -18,16 +18,25 @@ const Navbar: FC = () => {
         .catch((error) => {
           console.error('Failed to fetch profile:', error);
           localStorage.removeItem('token');
-          setUser(null)
+          setUser(null);
         });
     }
   }, []);
 
+  const handleAvatarClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     setUser(null);
-    window.location.href = '/login';
-  }
+    handleMenuClose();
+    window.location.href = '/';
+  };
 
   return (
     <AppBar position="static">
@@ -52,21 +61,43 @@ const Navbar: FC = () => {
           Post
         </Button>
         {user ? (
-          <Tooltip title={user.username}>
-            <Avatar
-              src={user.avatar}
-              component={Link}
-              to="/profile"
-              sx={{
-                bgcolor: !user.avatar ? 'primary.main' : undefined,
-                width: 36,
-                height: 36,
-                textDecoration: 'none',
-              }}
+          <>
+            <Tooltip title={user.username}>
+              <Avatar
+                src={user.avatar}
+                sx={{
+                  bgcolor: !user.avatar ? 'primary.main' : undefined,
+                  width: 36,
+                  height: 36,
+                  cursor: 'pointer',
+                  "&:hover": { border: "2px solid #1976d2" },
+                }}
+                onClick={handleAvatarClick}
+              >
+                {!user.avatar && user.username[0].toUpperCase()}
+              </Avatar>
+            </Tooltip>
+
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
             >
-              {!user.avatar && user.username[0].toUpperCase()}
-            </Avatar>
-          </Tooltip>
+              <MenuItem
+                component={Link}
+                to="/profile"
+                onClick={handleMenuClose}
+              >
+                Profile
+              </MenuItem>
+              <MenuItem onClick={handleLogout}>
+                Logout
+              </MenuItem>
+            </Menu>
+
+          </>
         ) : (
           <Button
             color="inherit"

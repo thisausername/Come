@@ -45,6 +45,10 @@ func main() {
 		user.POST("/post/:id/comment", controller.CreateComment)
 
 		user.GET("/profile", controller.GetProfile)
+		user.PUT("/profile", func(c *gin.Context) {
+			resp := controller.UpdateProfile(c)
+			c.JSON(resp.Code, resp)
+		})
 		user.POST("/avatar", func(c *gin.Context) {
 			resp := controller.UploadAvatar(c)
 			c.JSON(resp.Code, resp)
