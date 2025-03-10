@@ -67,15 +67,10 @@ func GetPost(c *gin.Context) {
 	c.JSON(http.StatusOK, Success(http.StatusOK, post))
 }
 
-func Post(c *gin.Context) {
-	resp := processPost(c)
-	c.JSON(resp.Code, resp)
-}
-
-func processPost(c *gin.Context) *ServerResponse[string] {
+func CreatePost(c *gin.Context) {
 	authorID, exists := c.Get("user_id")
 	if !exists {
-		return Error(http.StatusUnauthorized, "user not authenticated")
+		c.JSON(http.StatusUnauthorized, Error(http.StatusUnauthorized, "user not authenticated"))
 	}
 
 	var postInput struct {
@@ -83,7 +78,7 @@ func processPost(c *gin.Context) *ServerResponse[string] {
 		Content string `json:"content" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&postInput); err != nil {
-		return Error(http.StatusBadRequest, "invalid request format: "+err.Error())
+		c.JSON(http.StatusBadRequest, Error(http.StatusBadRequest, "invalid request format: "+err.Error()))
 	}
 
 	post := model.Post{
@@ -92,10 +87,10 @@ func processPost(c *gin.Context) *ServerResponse[string] {
 		AuthorID: authorID.(uint),
 	}
 	if repository.CreatePost(&post) != nil {
-		return Error(http.StatusInternalServerError, "failed to save post")
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to save post"))
 	}
 
-	return Success(http.StatusCreated, "post successful")
+	c.JSON(http.StatusCreated, Success(http.StatusCreated, "post successful"))
 }
 
 func GetPostComments(c *gin.Context) {

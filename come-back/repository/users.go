@@ -27,6 +27,14 @@ func QueryUser(userID uint) (model.User, error) {
 	return user, err
 }
 
+func QueryUsers(userIDs []uint) ([]model.User, error) {
+	var users []model.User
+	if err := dB.Where("id IN ?", userIDs).Find(&users).Error; err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
 func CreateUser(user *model.User) error {
 	return dB.Create(user).Error
 }

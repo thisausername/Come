@@ -3,7 +3,7 @@
 import { AppBar, Toolbar, Typography, Button, Avatar, Menu, MenuItem, Tooltip } from '@mui/material';
 import { FC, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getProfile } from '../api/user';
+import { getUser } from '../api/user';
 import { UserProfile } from '../pages/Profile';
 
 const Navbar: FC = () => {
@@ -13,13 +13,11 @@ const Navbar: FC = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      getProfile()
+      getUser()
         .then((data) => {
-          console.log('Profile fetched:', data);
           setUser(data);
         })
-        .catch((error) => {
-          console.error('Failed to fetch profile:', error);
+        .catch((_) => {
           localStorage.removeItem('token');
           setUser(null);
         });

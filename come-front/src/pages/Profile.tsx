@@ -1,6 +1,6 @@
 // src/pages/Profile.tsx
 
-import { getProfile, updateProfile, uploadAvatar } from "../api/user";
+import { getUser, updateUser, uploadAvatar } from "../api/user";
 import { UserRole } from "../constants/roles";
 import { useEffect, useState, useRef } from "react";
 import {
@@ -35,7 +35,7 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     try {
-      const data = await getProfile();
+      const data = await getUser();
       setUser(data);
       setUsername(data.username);
       setEmail(data.email);
@@ -65,7 +65,7 @@ const Profile = () => {
 
   const handleUpdateProfile = async () => {
     try {
-      const response = await updateProfile({username, email});
+      await updateUser({username, email});
       setEditMode(false);
       await fetchProfile();
       setError(null);

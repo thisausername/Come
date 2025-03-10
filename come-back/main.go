@@ -28,9 +28,12 @@ func main() {
 	{
 		public.POST("/login", controller.Login)
 		public.POST("/register", controller.Register)
+
 		public.GET("/posts", controller.GetPostsPaginated)
 		public.GET("/post/:id", controller.GetPost)
 		public.GET("/post/:id/comments", controller.GetPostComments)
+
+		public.GET("/users/batch", controller.GetUsersBatch)
 	}
 
 	test := router.Group("/test")
@@ -39,12 +42,12 @@ func main() {
 		test.GET("/posts", controller.GetAllPost)
 	}
 
-	user := router.Group("/user").Use(middleware.UserAuth())
+	user := router.Group("/api").Use(middleware.UserAuth())
 	{
-		user.POST("/post", controller.Post)
+		user.GET("/profile", controller.GetUser)
+		user.POST("/post", controller.CreatePost)
 		user.POST("/post/:id/comment", controller.CreateComment)
 
-		user.GET("/profile", controller.GetProfile)
 		user.PUT("/profile", func(c *gin.Context) {
 			resp := controller.UpdateProfile(c)
 			c.JSON(resp.Code, resp)

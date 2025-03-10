@@ -32,7 +32,7 @@ export const getAllPosts = async (): Promise<Post[]> => {
 
 export const getPostsPaginated = async (page: number, pageSize: number) => {
   const token = localStorage.getItem('token');
-  const response = await post_api.get(`/posts?page=${page}&pageSize=${pageSize}`, {
+  const response = await post_api.get(`posts?page=${page}&pageSize=${pageSize}`, {
     headers: { Authorization: token },
   });
   return response.data.data;

@@ -18,7 +18,7 @@ export interface LoginPayload {
 }
 
 const auth_api = axios.create({
-  baseURL: 'api/',
+  baseURL: '/api/',
   headers: { 'Content-Type': 'application/json' },
 });
 

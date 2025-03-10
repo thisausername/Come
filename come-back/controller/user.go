@@ -1,17 +1,20 @@
 package controller
 
 import (
+	"come-back/model"
 	"come-back/repository"
 	"come-back/util"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
-func GetProfile(c *gin.Context) {
+func GetUser(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, Error(http.StatusUnauthorized, "Unauthorized"))
@@ -25,6 +28,33 @@ func GetProfile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, Success(http.StatusOK, user))
+}
+
+func GetUsersBatch(c *gin.Context) {
+	idsStr := c.Query("ids")
+	if idsStr == "" {
+		c.JSON(http.StatusBadRequest, Error(http.StatusBadRequest, "ids parameter is required"))
+	}
+
+	ids := strings.Split(idsStr, ",")
+	var userIDs []uint
+	for _, id := range ids {
+		if uid, err := strconv.ParseUint(id, 10, 32); err == nil {
+			userIDs = append(userIDs, uint(uid))
+		}
+	}
+
+	users, err := repository.QueryUsers(userIDs)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to fetch users"))
+	}
+
+	userMap := make(map[uint]model.User)
+	for _, user := range users {
+		userMap[user.ID] = user
+	}
+
+	c.JSON(http.StatusOK, Success(http.StatusOK, userMap))
 }
 
 func UploadAvatar(c *gin.Context) *ServerResponse[string] {

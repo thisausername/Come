@@ -3,12 +3,17 @@
 import axios from "axios";
 import { Post, Comment } from "./post"
 
+export interface User {
+  username: string;
+  avatar: string;
+}
+
 const user_api = axios.create({
-    baseURL: '/user/',
+    baseURL: '/api/',
     headers: {'Content-Type': 'application/json'},
 });
 
-export const getProfile = async () => {
+export const getUser = async () => {
   const token = localStorage.getItem("token");
   const response = await user_api.get('/profile', {
     headers: { Authorization: token },
@@ -17,7 +22,15 @@ export const getProfile = async () => {
   return profile;
 };
 
-export const updateProfile = async (updates: {username: string; email: string}) => {
+export const getUsersBatch = async (ids: number[]) => {
+  const token = localStorage.getItem('token');
+  const response = await user_api.get(`/users/batch?ids=${ids.join(',')}`, {
+    headers: { Authorization: token },
+  });
+  return response.data.data;
+};
+
+export const updateUser = async (updates: {username: string; email: string}) => {
   const token = localStorage.getItem("token");
   const response = await user_api.put('/profile', updates, {
     headers: { Authorization: token },
