@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import styles from '../styles/auth.module.css';
 import { emailRegex } from '../constants/reg';
+import { Link as RouterLink } from 'react-router-dom'
 
 interface AuthFormProps {
   type: 'login' | 'register';
@@ -40,6 +41,7 @@ const AuthForm: FC<AuthFormProps> = ({ type, onSubmit, onSwitch, loading }) => {
       setError("invalid email format 😢");
       return;
     }
+
     if (type === 'register' && password !== repeatPassword) {
       setError("passwords do not match 🤔");
       return;
@@ -133,6 +135,10 @@ const AuthForm: FC<AuthFormProps> = ({ type, onSubmit, onSwitch, loading }) => {
           {type === 'login' ? (
             <>
               New comer? <Link onClick={onSwitch}>Sign up</Link>
+              <br />
+              <Link component={RouterLink} to="/forgot-password">
+               Forgor password? 😇
+              </Link>
             </>
           ) : (
             <>

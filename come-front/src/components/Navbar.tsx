@@ -14,12 +14,17 @@ const Navbar: FC = () => {
     const token = localStorage.getItem('token');
     if (token) {
       getProfile()
-        .then((data) => setUser(data))
+        .then((data) => {
+          console.log('Profile fetched:', data);
+          setUser(data);
+        })
         .catch((error) => {
           console.error('Failed to fetch profile:', error);
           localStorage.removeItem('token');
           setUser(null);
         });
+    } else {
+      setUser(null);
     }
   }, []);
 
@@ -35,36 +40,28 @@ const Navbar: FC = () => {
     localStorage.removeItem('token');
     setUser(null);
     handleMenuClose();
-    window.location.href = '/';
+    window.location.href = '/login';
   };
+
+  const avatarSrc = user?.avatar ? `/${user.avatar}` : undefined;
 
   return (
     <AppBar position="static">
       <Toolbar>
-        <Button
-          color="inherit"
-          component={Link}
-          to="/"
-          sx={{ textTransform: 'none', mr: 2 }}
-        >
+        <Button color="inherit" component={Link} to="/" sx={{ textTransform: 'none', mr: 2 }}>
           Home
         </Button>
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
           Forum
         </Typography>
-        <Button
-          color="inherit"
-          component={Link}
-          to="/post"
-          sx={{ textTransform: 'none', mr: 2 }}
-        >
+        <Button color="inherit" component={Link} to="/post" sx={{ textTransform: 'none', mr: 2 }}>
           Post
         </Button>
         {user ? (
           <>
             <Tooltip title={user.username}>
               <Avatar
-                src={user.avatar}
+                src={avatarSrc}
                 sx={{
                   bgcolor: !user.avatar ? 'primary.main' : undefined,
                   width: 36,
@@ -77,34 +74,31 @@ const Navbar: FC = () => {
                 {!user.avatar && user.username[0].toUpperCase()}
               </Avatar>
             </Tooltip>
-
             <Menu
               anchorEl={anchorEl}
               open={Boolean(anchorEl)}
               onClose={handleMenuClose}
               anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
               transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+              sx={{
+                '& .MuiPaper-root': {
+                  minWidth: 150,
+                  bgcolor: '#ffffff',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                  borderRadius: 2,
+                },
+              }}
             >
-              <MenuItem
-                component={Link}
-                to="/profile"
-                onClick={handleMenuClose}
-              >
+              <MenuItem component={Link} to="/profile" onClick={handleMenuClose}>
                 Profile
               </MenuItem>
               <MenuItem onClick={handleLogout}>
                 Logout
               </MenuItem>
             </Menu>
-
           </>
         ) : (
-          <Button
-            color="inherit"
-            component={Link}
-            to="/login"
-            sx={{ textTransform: 'none' }}
-          >
+          <Button color="inherit" component={Link} to="/login" sx={{ textTransform: 'none' }}>
             Login
           </Button>
         )}
@@ -114,4 +108,3 @@ const Navbar: FC = () => {
 };
 
 export default Navbar;
-
