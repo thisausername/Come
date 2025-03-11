@@ -50,6 +50,16 @@ func main() {
 			auth.PUT("/post/:id", controller.UpdatePost)
 			auth.DELETE("/post/:id", controller.DeletePost)
 		}
+
+		admin := api.Group("/admin").Use(middleware.AdminAuth())
+		{
+			admin.GET("/users", controller.GetAllUsers)
+			admin.PUT("/users/:id/ban", controller.BanUser)
+			admin.PUT("/users/:id/promote", controller.PromoteToAdmin)
+			admin.DELETE("/post/:id", controller.DeletePostAdmin)
+			admin.DELETE("/comments/:id", controller.DeleteCommentAdmin)
+			admin.GET("/dashboard", controller.AdminDashboard)
+		}
 	}
 
 	port := os.Getenv("PORT")

@@ -30,7 +30,7 @@ function App() {
         </Route>
 
         <Route element={<ProtectedRouter requiredRole={UserRole.Admin} />}>
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
         </Route>
         
       </Routes>

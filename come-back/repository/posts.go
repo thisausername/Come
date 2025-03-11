@@ -37,3 +37,9 @@ func UpdatePost(postId uint, updates map[string]any) error {
 func DeletePost(postId uint) error {
 	return dB.Where("id = ?", postId).Delete(&model.Post{}).Error
 }
+
+func CountPosts() (int64, error) {
+	var count int64
+	err := dB.Model(&model.Comment{}).Count(&count).Error
+	return count, err
+}

@@ -71,6 +71,17 @@ func CreatePost(c *gin.Context) {
 	authorID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, Error(http.StatusUnauthorized, "user not authenticated"))
+		return
+	}
+
+	banned, err := repository.UserIsBanned(authorID.(uint))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to validate author"))
+		return
+	}
+	if banned {
+		c.JSON(http.StatusForbidden, Error(http.StatusForbidden, "user banned"))
+		return
 	}
 
 	var postInput struct {
@@ -79,6 +90,7 @@ func CreatePost(c *gin.Context) {
 	}
 	if err := c.ShouldBindJSON(&postInput); err != nil {
 		c.JSON(http.StatusBadRequest, Error(http.StatusBadRequest, "invalid request format: "+err.Error()))
+		return
 	}
 
 	post := model.Post{
@@ -88,6 +100,7 @@ func CreatePost(c *gin.Context) {
 	}
 	if repository.CreatePost(&post) != nil {
 		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to save post"))
+		return
 	}
 
 	c.JSON(http.StatusCreated, Success(http.StatusCreated, "post successful"))
@@ -97,6 +110,16 @@ func UpdatePost(c *gin.Context) {
 	authorID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, Error(http.StatusUnauthorized, "user not authenticated"))
+		return
+	}
+
+	banned, err := repository.UserIsBanned(authorID.(uint))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to validate author"))
+		return
+	}
+	if banned {
+		c.JSON(http.StatusForbidden, Error(http.StatusForbidden, "user banned"))
 		return
 	}
 
@@ -150,6 +173,16 @@ func DeletePost(c *gin.Context) {
 	authorID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, Error(http.StatusUnauthorized, "user not authenticated"))
+		return
+	}
+
+	banned, err := repository.UserIsBanned(authorID.(uint))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to validate author"))
+		return
+	}
+	if banned {
+		c.JSON(http.StatusForbidden, Error(http.StatusForbidden, "user banned"))
 		return
 	}
 
@@ -210,6 +243,16 @@ func CreateComment(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, Error(http.StatusUnauthorized, "user not authenticated"))
+		return
+	}
+
+	banned, err := repository.UserIsBanned(userID.(uint))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to validate author"))
+		return
+	}
+	if banned {
+		c.JSON(http.StatusForbidden, Error(http.StatusForbidden, "user banned"))
 		return
 	}
 

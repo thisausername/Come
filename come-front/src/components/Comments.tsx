@@ -14,6 +14,7 @@ import { Comment } from '../api/post';
 interface CommentsSectionProps {
   comments: Comment[];
   newComment: string;
+  disabled?: boolean;
   onCommentChange: (value: string) => void;
   onCommentSubmit: () => void;
 }
@@ -21,6 +22,7 @@ interface CommentsSectionProps {
 const CommentsSection: React.FC<CommentsSectionProps> = ({
   comments,
   newComment,
+  disabled,
   onCommentChange,
   onCommentSubmit,
 }) => {
@@ -51,12 +53,13 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
         value={newComment}
         onChange={(e) => onCommentChange(e.target.value)}
         sx={{ mt: 2 }}
+        disabled={disabled}
       />
       <Button
         variant="contained"
         onClick={onCommentSubmit}
         sx={{ mt: 1 }}
-        disabled={!newComment.trim()}
+        disabled={!newComment.trim() || disabled}
       >
         Submit Comment
       </Button>

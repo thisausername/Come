@@ -26,7 +26,7 @@ const Login = () => {
       localStorage.setItem('token', token);
       localStorage.setItem('role', decoded.role.toString());
 
-      navigate(-1);
+      navigate("/");
     } catch (err: any) {
       setError('account not exist or wrong password');
     } finally {

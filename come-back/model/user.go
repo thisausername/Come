@@ -16,5 +16,6 @@ type User struct {
 	Password  string    `gorm:"type:varchar(255);not null" json:"password"`
 	Avatar    string    `gorm:"type:varchar(255)" json:"avatar,omitempty"`
 	Role      UserRole  `gorm:"not null;default:0" json:"role"`
+	Banned    bool      `gorm:"default:false" json:"banned"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
 }

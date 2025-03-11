@@ -2,9 +2,9 @@ package repository
 
 import "come-back/model"
 
-func QueryAllComments(postId uint) ([]model.Comment, error) {
+func QueryAllComments(postID uint) ([]model.Comment, error) {
 	var comments []model.Comment
-	err := dB.Where("post_id = ?", postId).Find(&comments).Error
+	err := dB.Where("post_id = ?", postID).Find(&comments).Error
 	if err != nil {
 		return nil, err
 	}
@@ -13,4 +13,14 @@ func QueryAllComments(postId uint) ([]model.Comment, error) {
 
 func CreateComment(comment *model.Comment) error {
 	return dB.Create(comment).Error
+}
+
+func DeleteComment(commentID uint) error {
+	return dB.Where("id = ?", commentID).Delete(&model.Comment{}).Error
+}
+
+func CountComments() (int64, error) {
+	var count int64
+	err := dB.Model(&model.Comment{}).Count(&count).Error
+	return count, err
 }

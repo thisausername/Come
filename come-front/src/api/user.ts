@@ -4,19 +4,15 @@ import { UserRole } from "@/constants/roles";
 import apiClient from "./client";
 
 export interface User {
-  username: string;
-  email: string;
-  avatar: string;
-}
-
-export interface UserProfile {
   id: number;
-  email: string;
   username: string;
+  email: string;
   avatar: string;
-  role: UserRole;
+  role: UserRole
+  banned: boolean;
 }
 
+// current user
 export const getProfile = async () => {
   const response = await apiClient.get('/profile');
   return response.data.data;

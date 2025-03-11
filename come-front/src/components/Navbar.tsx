@@ -3,10 +3,11 @@
 import { AppBar, Toolbar, Typography, Button, Avatar, Menu, MenuItem, Tooltip } from '@mui/material';
 import { FC, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getProfile, UserProfile } from '../api/user';
+import { getProfile, User } from '../api/user';
+import { UserRole } from '../constants/roles';
 
 const Navbar: FC = () => {
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   useEffect(() => {
@@ -51,16 +52,17 @@ const Navbar: FC = () => {
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
           Forum
         </Typography>
-        <Button color="inherit" component={Link} to="/post" sx={{ textTransform: 'none', mr: 2 }}>
-          Post
-        </Button>
+        { !user?.banned &&
+          <Button color="inherit" component={Link} to="/post" sx={{ textTransform: 'none', mr: 2 }}>
+            Post
+          </Button>}
         {user ? (
           <>
             <Tooltip title={user.username}>
               <Avatar
                 src={avatarSrc}
                 sx={{
-                  bgcolor: !user.avatar ? 'primary.main' : undefined,
+                  bgcolor: !avatarSrc? 'primary.main' : undefined,
                   width: 36,
                   height: 36,
                   cursor: 'pointer',
@@ -89,6 +91,11 @@ const Navbar: FC = () => {
               <MenuItem component={Link} to="/profile" onClick={handleMenuClose}>
                 Profile
               </MenuItem>
+              { Number(localStorage.getItem("role")) as UserRole === UserRole.Admin &&
+                <MenuItem component={Link} to="/admin/dashboard" onClick={handleMenuClose}>
+                  Dashboard
+                </MenuItem>
+              }
               <MenuItem onClick={handleLogout}>
                 Logout
               </MenuItem>

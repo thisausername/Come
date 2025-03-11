@@ -46,3 +46,18 @@ func UpdateUser(userID uint, updates map[string]any) error {
 func DeleteUser(userID uint) error {
 	return dB.Where("id = ?", userID).Delete(&model.User{}).Error
 }
+
+func CountUsers() (int64, error) {
+	var count int64
+	err := dB.Model(&model.User{}).Count(&count).Error
+	return count, err
+}
+
+func UserIsBanned(userID uint) (bool, error) {
+	var user model.User
+	err := dB.Select("banned").Where("id = ?", userID).First(&user).Error
+	if err != nil {
+		return false, err
+	}
+	return user.Banned, nil
+}

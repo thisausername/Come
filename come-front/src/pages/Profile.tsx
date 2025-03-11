@@ -1,6 +1,6 @@
 // src/pages/Profile.tsx
 
-import { getProfile, getUser, updateProfile, uploadAvatar, UserProfile } from "../api/user";
+import { getProfile, getUser, updateProfile, uploadAvatar, User } from "../api/user";
 import { UserRole } from "../constants/roles";
 import { useEffect, useState, useRef } from "react";
 import {
@@ -20,7 +20,7 @@ import { jwtDecode } from "jwt-decode";
 
 const Profile = () => {
   const { userId } = useParams<{ userId: string }>();
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [username, setUsername] = useState("");
@@ -30,10 +30,10 @@ const Profile = () => {
   const token = localStorage.getItem("token");
   const currentUserId = token ? (jwtDecode<{ user_id: number }>(token).user_id) : null;
   const isOwnProfile = userId ? parseInt(userId) === currentUserId : true;
-
+  console.log("isOwnProfile: ", isOwnProfile);
   const fetchProfile = async () => {
     try {
-      let data: UserProfile;
+      let data: User;
       if (userId) {
         data = await getUser(parseInt(userId));
       } else {
