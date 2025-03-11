@@ -19,7 +19,7 @@ import { emailRegex } from "../constants/reg";
 import { jwtDecode } from "jwt-decode";
 
 const Profile = () => {
-  const { userId } = useParams<{ userId: string }>();
+  const { id } = useParams<{ id?: string }>();
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -29,13 +29,13 @@ const Profile = () => {
 
   const token = localStorage.getItem("token");
   const currentUserId = token ? (jwtDecode<{ user_id: number }>(token).user_id) : null;
-  const isOwnProfile = userId ? parseInt(userId) === currentUserId : true;
-  console.log("isOwnProfile: ", isOwnProfile);
+  const isOwnProfile = id? parseInt(id) === currentUserId : true;
+
   const fetchProfile = async () => {
     try {
       let data: User;
-      if (userId) {
-        data = await getUser(parseInt(userId));
+      if (id) {
+        data = await getUser(parseInt(id));
       } else {
         data = await getProfile();
       }

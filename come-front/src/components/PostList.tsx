@@ -36,7 +36,6 @@ const PostList = () => {
 
       const postsPreview = postsList.map((post) => ({
         ...post,
-        authorId: post.authorId,
         authorUsername: usersMap[post.authorId]?.username || "Unknown",
         avatar: usersMap[post.authorId]?.avatar || "",
       }));
