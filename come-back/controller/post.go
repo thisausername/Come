@@ -93,6 +93,92 @@ func CreatePost(c *gin.Context) {
 	c.JSON(http.StatusCreated, Success(http.StatusCreated, "post successful"))
 }
 
+func UpdatePost(c *gin.Context) {
+	authorID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, Error(http.StatusUnauthorized, "user not authenticated"))
+		return
+	}
+
+	postIDStr := c.Param("id")
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, Error(http.StatusBadRequest, "invalid post ID"))
+		return
+	}
+
+	post, err := repository.QueryPost(uint(postID))
+	if err != nil {
+		c.JSON(http.StatusNotFound, Error(http.StatusNotFound, "post not found"))
+		return
+	}
+
+	if post.AuthorID != authorID.(uint) {
+		c.JSON(http.StatusForbidden, Error(http.StatusForbidden, "you can only update your own posts"))
+		return
+	}
+
+	var postInput struct {
+		Title   string `json:"title" binding:"required,max=50"`
+		Content string `json:"content" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&postInput); err != nil {
+		c.JSON(http.StatusBadRequest, Error(http.StatusBadRequest, "invalid request format: "+err.Error()))
+		return
+	}
+
+	updates := map[string]any{
+		"title":   postInput.Title,
+		"content": postInput.Content,
+	}
+
+	if err := repository.UpdatePost(uint(postID), updates); err != nil {
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to update post"))
+		return
+	}
+
+	updatedPost, err := repository.QueryPost(uint(postID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to fetch updated post"))
+		return
+	}
+
+	c.JSON(http.StatusOK, Success(http.StatusOK, updatedPost))
+}
+
+func DeletePost(c *gin.Context) {
+	authorID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, Error(http.StatusUnauthorized, "user not authenticated"))
+		return
+	}
+
+	postIDStr := c.Param("id")
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, Error(http.StatusBadRequest, "invalid post id"))
+		return
+	}
+
+	post, err := repository.QueryPost(uint(postID))
+	if err != nil {
+		c.JSON(http.StatusNotFound, Error(http.StatusNotFound, "post not found"))
+		return
+	}
+
+	if post.AuthorID != authorID.(uint) {
+		c.JSON(http.StatusForbidden, Error(http.StatusForbidden, "you can only delete your own posts"))
+		return
+	}
+
+	if err := repository.DeletePost(uint(postID)); err != nil {
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to delete post"))
+		return
+	}
+
+	c.JSON(http.StatusOK, Success(http.StatusOK, "post deleted successfully"))
+}
+
 func GetPostComments(c *gin.Context) {
 	postIDStr := c.Param("id")
 	postID, err := strconv.Atoi(postIDStr)

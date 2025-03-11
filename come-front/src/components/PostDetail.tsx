@@ -7,15 +7,13 @@ import {
   Card,
   CardContent,
   Container,
-  TextField,
   Typography,
-  List,
-  ListItem,
-  ListItemText,
+  TextField,
 } from '@mui/material';
 import Navbar from './Navbar';
-import { Post, Comment, getPost, getPostComments } from '../api/post';
-import { createComment } from '../api/post';
+import Comments from './Comments';
+import { Post, Comment, getPost, getPostComments, createComment, deletePost, updatePost } from '../api/post';
+import { jwtDecode } from 'jwt-decode';
 
 const PostDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +23,13 @@ const PostDetail: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState<string>('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
+  const [editedContent, setEditedContent] = useState('');
+
+  const token = localStorage.getItem('token');
+  const currentUserId = token ? jwtDecode<{ user_id: number }>(token).user_id : null;
+  const isOwnPost = post && currentUserId === post.authorId;
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -35,11 +40,13 @@ const PostDetail: React.FC = () => {
       }
 
       try {
-        const postId = parseInt(id, 10)
+        const postId = parseInt(id, 10);
         const postData = await getPost(postId);
-        const commentData = await getPostComments(postId)
+        const commentData = await getPostComments(postId);
         setPost(postData);
         setComments(commentData);
+        setEditedTitle(postData.title);
+        setEditedContent(postData.content);
       } catch (err: any) {
         setError(err.response?.data?.error || 'Failed to load post');
         console.error(err);
@@ -64,7 +71,41 @@ const PostDetail: React.FC = () => {
       setNewComment('');
     } catch (err: any) {
       setError(err.message || 'Failed to submit comment');
-      console.error(err)
+      console.error(err);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!id || !isOwnPost || !window.confirm('Are you sure you want to delete this post?')) return;
+    try {
+      const postId = parseInt(id, 10);
+      await deletePost(postId);
+      navigate('/');
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete post');
+      console.error(err);
+    }
+  };
+
+  const handleEdit = () => {
+    if (isOwnPost) {
+      setIsEditing(true);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!id || !isOwnPost) return;
+    try {
+      const postId = parseInt(id, 10);
+      const updatedPost = await updatePost(postId, {
+        title: editedTitle,
+        content: editedContent,
+      });
+      setPost(updatedPost);
+      setIsEditing(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to update post');
+      console.error(err);
     }
   };
 
@@ -90,15 +131,52 @@ const PostDetail: React.FC = () => {
       <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
         <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
           <CardContent>
-            <Typography variant="h4" gutterBottom>
-              {post.title}
-            </Typography>
-            <Typography variant="body1" component="p" sx={{ mb: 2 }}>
-              {post.content}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Posted by User #{post.authorId} on {new Date(post.createdAt).toLocaleString()}
-            </Typography>
+            {isEditing && isOwnPost ? (
+              <>
+                <TextField
+                  fullWidth
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={4}
+                  value={editedContent}
+                  onChange={(e) => setEditedContent(e.target.value)}
+                  sx={{ mb: 2 }}
+                />
+                <Button variant="contained" onClick={handleSave} sx={{ mr: 1 }}>
+                  Save
+                </Button>
+                <Button variant="outlined" onClick={() => setIsEditing(false)}>
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <>
+                <Typography variant="h4" gutterBottom>
+                  {post.title}
+                </Typography>
+                <Typography variant="body1" component="p" sx={{ mb: 2 }}>
+                  {post.content}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Posted by User #{post.authorId} on {new Date(post.createdAt).toLocaleString()}
+                </Typography>
+                {isOwnPost && (
+                  <div>
+                    <Button variant="contained" onClick={handleEdit} sx={{ mt: 2, mr: 1 }}>
+                      Edit
+                    </Button>
+                    <Button variant="contained" color="error" onClick={handleDelete} sx={{ mt: 2 }}>
+                      Delete
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -110,44 +188,15 @@ const PostDetail: React.FC = () => {
           Back
         </Button>
 
-        <Typography variant="h6" gutterBottom>
-          Comments
-        </Typography>
-        <List>
-          {comments.length > 0 ? (
-            comments.map((comment) => (
-              <ListItem key={comment.id} divider>
-                <ListItemText
-                  primary={comment.content}
-                  secondary={`User #${comment.authorId} - ${new Date(comment.createdAt).toLocaleString()}`}
-                />
-              </ListItem>
-            ))
-          ) : (
-            <Typography>No comments yet</Typography>
-          )}
-        </List>
-
-        <TextField
-          label="Add a comment"
-          variant="outlined"
-          fullWidth
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          sx={{ mt: 2 }}
+        <Comments
+          comments={comments}
+          newComment={newComment}
+          onCommentChange={setNewComment}
+          onCommentSubmit={handleCommentSubmit}
         />
-        <Button
-          variant="contained"
-          onClick={handleCommentSubmit}
-          sx={{ mt: 1 }}
-          disabled={!newComment.trim()}
-        >
-          Submit Comment
-        </Button>
       </Container>
     </>
   );
 };
 
 export default PostDetail;
-

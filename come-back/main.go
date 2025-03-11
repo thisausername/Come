@@ -47,6 +47,8 @@ func main() {
 
 			auth.POST("/post", controller.CreatePost)
 			auth.POST("/post/:id/comment", controller.CreateComment)
+			auth.PUT("/post/:id", controller.UpdatePost)
+			auth.DELETE("/post/:id", controller.DeletePost)
 		}
 	}
 

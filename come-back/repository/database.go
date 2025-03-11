@@ -32,5 +32,15 @@ func InitMySQL(dsn string) error {
 	if err != nil {
 		fmt.Println("error:", err)
 	}
+
+	err = dB.Exec(`
+		ALTER TABLE posts
+		ADD CONSTRAINT fk_posts_author
+		FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
+	`).Error
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
 	return nil
 }

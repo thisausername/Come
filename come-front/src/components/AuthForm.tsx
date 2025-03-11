@@ -137,7 +137,7 @@ const AuthForm: FC<AuthFormProps> = ({ type, onSubmit, onSwitch, loading }) => {
               New comer? <Link onClick={onSwitch}>Sign up</Link>
               <br />
               <Link component={RouterLink} to="/forgot-password">
-               Forgor password? 😇
+               Forgot password? 😇
               </Link>
             </>
           ) : (

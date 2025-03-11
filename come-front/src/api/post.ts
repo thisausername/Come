@@ -35,6 +35,16 @@ export const createPost = async (post: {title: string; content: string}): Promis
   return response.data.data;
 }
 
+export const updatePost = async (id: number, updates: {title: string; content: string}): Promise<Post> => {
+  const response = await apiClient.put(`/post/${id}`, updates);
+  return response.data.data;
+}
+
+export const deletePost = async (id: number) => {
+  const response = await apiClient.delete(`/post/${id}`);
+  return response.data.data;
+}
+
 export const getPostComments = async (postId: number): Promise<Comment[]> => {
   const response = await apiClient.get(`/post/${postId}/comments`);
   return response.data.data || [];
