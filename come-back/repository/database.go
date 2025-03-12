@@ -19,7 +19,7 @@ func InitMySQL(dsn string) error {
 		return fmt.Errorf("MySQL connection failed: %v", err)
 	}
 	fmt.Println("MySQL connected")
-	err = dB.AutoMigrate(&model.User{}, &model.Post{}, &model.Comment{})
+	err = dB.AutoMigrate(&model.User{}, &model.Post{}, &model.Comment{}, &model.ChatMessage{})
 	if err != nil {
 		return err
 	}
@@ -42,6 +42,13 @@ func InitMySQL(dsn string) error {
 	`).Error
 	if err != nil {
 		fmt.Println("error:", err)
+	}
+
+	err = dB.Exec(`
+		INSERT INTO chat_messages (user_id, content, created_at) VALUES (0, 'Test message', NOW());
+	`).Error
+	if err != nil {
+		fmt.Println("error", err)
 	}
 
 	addAdmin()

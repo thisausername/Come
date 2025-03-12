@@ -11,6 +11,7 @@ import { UserRole } from './constants/roles';
 import CreatePost from './components/CreatePost';
 import PostDetail from './components/PostDetail';
 import ForgotPassword from './pages/ForgotPassword';
+import Chat from './pages/Chat';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/post/:id" element={<PostDetail />} />
         <Route path="/user/:id" element={<Profile />} />
+        <Route path="/chat" element={<Chat />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="*" element={<div>404 - Page Not Found</div>} />
 
