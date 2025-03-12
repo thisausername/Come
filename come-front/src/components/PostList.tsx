@@ -29,6 +29,8 @@ const PostList = () => {
     try {
       const postData = await getPostsPaginated(currentPage, pageSize);
       const postsList: Post[] = postData.posts;
+      if (postsList.length === 0)
+        return
       setTotal(postData.total);
 
       const authorIds = [...new Set(postsList.map((post) => post.authorId))];

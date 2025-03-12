@@ -49,6 +49,7 @@ func GetUsersBatch(c *gin.Context) {
 	idsStr := c.Query("ids")
 	if idsStr == "" {
 		c.JSON(http.StatusBadRequest, Error(http.StatusBadRequest, "ids parameter is required"))
+		return
 	}
 
 	ids := strings.Split(idsStr, ",")
@@ -62,6 +63,7 @@ func GetUsersBatch(c *gin.Context) {
 	users, err := repository.QueryUsers(userIDs)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to fetch users"))
+		return
 	}
 
 	userMap := make(map[uint]model.User)

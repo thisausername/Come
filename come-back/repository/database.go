@@ -44,13 +44,6 @@ func InitMySQL(dsn string) error {
 		fmt.Println("error:", err)
 	}
 
-	err = dB.Exec(`
-		INSERT INTO chat_messages (user_id, content, created_at) VALUES (0, 'Test message', NOW());
-	`).Error
-	if err != nil {
-		fmt.Println("error", err)
-	}
-
 	addAdmin()
 
 	return nil

@@ -54,12 +54,16 @@ func GetChatHistory(c *gin.Context) {
 
 	var response []Message
 	for _, msg := range messages {
-		username := fmt.Sprintf("Anonymous_%d", rand.Intn(10000))
+		var username string
 		if msg.UserID != 0 {
 			user, err := repository.QueryUser(msg.UserID)
 			if err == nil {
 				username = user.Username
+			} else {
+				username = "unknown"
 			}
+		} else {
+			username = fmt.Sprintf("anonymous_%d", msg.ID%1000)
 		}
 		response = append(response, Message{
 			UserID:    msg.UserID,

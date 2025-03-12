@@ -12,6 +12,12 @@ const Chat: React.FC = () => {
   const ws = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const getWebSocketUrl = (token: string) => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    return `${protocol}//${host}:8080/api/chat?token=${token}`;
+  };
+
   useEffect(() => {
     let mounted = true;
 
@@ -19,7 +25,7 @@ const Chat: React.FC = () => {
       try {
         setLoading(true);
         const history = await getChatHistory();
-        if (mounted) {
+        if (mounted && history !== null) {
           setMessages(history.map(msg => ({
               ...msg,
               timestamp: msg.timestamp * 1000,
@@ -27,7 +33,7 @@ const Chat: React.FC = () => {
         }
 
         const token = localStorage.getItem('token') || '';
-        ws.current = new WebSocket(`ws://localhost:8080/api/chat?token=${token}`);
+        ws.current = new WebSocket(getWebSocketUrl(token));
 
         ws.current.onopen = () => {
           console.log('Connected to chat');
@@ -120,7 +126,7 @@ const Chat: React.FC = () => {
         fullWidth
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+        onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
         placeholder="Type a message..."
       />
       <Button variant="contained" onClick={sendMessage} sx={{ mt: 1 }}>Send</Button>

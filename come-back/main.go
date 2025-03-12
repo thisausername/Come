@@ -38,7 +38,7 @@ func main() {
 			public.GET("/user/:id", controller.GetUser)
 			public.GET("/users/batch", controller.GetUsersBatch)
 
-			public.GET("/chat", controller.HandleChat)
+			public.GET("/chat", middleware.WsOptionalAuth(), controller.HandleChat)
 			public.GET("/chat/history", controller.GetChatHistory)
 		}
 
