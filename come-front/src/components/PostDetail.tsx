@@ -24,8 +24,8 @@ const PostDetail: React.FC = () => {
 
   const token = localStorage.getItem('token');
   const currentUserId = token ? jwtDecode<{ user_id: number }>(token).user_id : null;
-  const isOwnPost = post && currentUserId === post.authorId;
-  const canEditOrDelete = isOwnPost && currentUser && !currentUser.banned;
+  const isOwnPost = post && currentUserId !== null && currentUserId === post.authorId;
+  const canEditOrDelete = token && isOwnPost && currentUser !== null && !currentUser.banned;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,16 +37,25 @@ const PostDetail: React.FC = () => {
 
       try {
         const postId = parseInt(id, 10);
-        const [postData, commentData, userData] = await Promise.all([
+        const [postData, commentData] = await Promise.all([
           getPost(postId),
           getPostComments(postId),
-          getProfile(),
         ]);
         setPost(postData);
         setComments(commentData);
-        setCurrentUser(userData);
         setEditedTitle(postData.title);
         setEditedContent(postData.content);
+
+        if (token) {
+          try {
+            const userData = await getProfile();
+            setCurrentUser(userData);
+          } catch (err: any) {
+            setCurrentUser(null);
+          }
+        } else {
+          setCurrentUser(null);
+        }
       } catch (err: any) {
         setError(err.response?.data?.error || 'Failed to load data');
         console.error(err);
