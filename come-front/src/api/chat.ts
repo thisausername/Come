@@ -7,7 +7,7 @@ export interface ChatMessage {
     userId: number;
     username: string;
     content: string;
-    createdAt: string;
+    timestamp: number;
 }
 
 export const getChatHistory = async (limit: number=50): Promise<ChatMessage[]> => {

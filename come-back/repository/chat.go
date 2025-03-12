@@ -8,6 +8,6 @@ func CreateChatMessage(msg *model.ChatMessage) error {
 
 func GetChatHistory(limit int) ([]model.ChatMessage, error) {
 	var messages []model.ChatMessage
-	err := dB.Order("created_at DESC").Limit(limit).Find(&messages).Error
+	err := dB.Order("created_at ASC").Limit(limit).Find(&messages).Error
 	return messages, err
 }

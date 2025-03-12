@@ -20,7 +20,10 @@ const Chat: React.FC = () => {
         setLoading(true);
         const history = await getChatHistory();
         if (mounted) {
-          setMessages(history);
+          setMessages(history.map(msg => ({
+              ...msg,
+              timestamp: msg.timestamp * 1000,
+          })));
         }
 
         const token = localStorage.getItem('token') || '';
@@ -38,7 +41,7 @@ const Chat: React.FC = () => {
               userId: msg.userId,
               username: msg.username,
               content: msg.content,
-              createdAt: new Date(msg.timestamp * 1000).toISOString(),
+              timestamp: msg.timestamp * 1000,
             }]);
           }
         };
@@ -103,7 +106,7 @@ const Chat: React.FC = () => {
             <ListItem key={msg.id}>
               <ListItemText
                 primary={`${msg.username}: ${msg.content}`}
-                secondary={new Date(msg.createdAt).toLocaleTimeString()}
+                secondary={new Date(msg.timestamp).toLocaleTimeString()}
                 sx={{ color: msg.userId === 0 ? 'grey' : 'inherit' }}
               />
             </ListItem>
