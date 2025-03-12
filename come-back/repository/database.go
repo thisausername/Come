@@ -24,26 +24,6 @@ func InitMySQL(dsn string) error {
 		return err
 	}
 
-	err = dB.Exec(`
-		ALTER TABLE comments
-		ADD CONSTRAINT fk_comments_post
-		FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
-		ADD CONSTRAINT fk_comments_author
-		FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE RESTRICT
-	`).Error
-	if err != nil {
-		fmt.Println("error:", err)
-	}
-
-	err = dB.Exec(`
-		ALTER TABLE posts
-		ADD CONSTRAINT fk_posts_author
-		FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
-	`).Error
-	if err != nil {
-		fmt.Println("error:", err)
-	}
-
 	addAdmin()
 
 	return nil
