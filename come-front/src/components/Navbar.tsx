@@ -46,12 +46,17 @@ const Navbar: FC = () => {
   return (
     <AppBar position="static">
       <Toolbar>
-        <Button color="inherit" component={Link} to="/" sx={{ textTransform: 'none', mr: 2 }}>
-          Home
-        </Button>
-        <Button color="inherit" component={Link} to="/chat" sx={{ textTransform: 'none', mr: 2}}>
-          Chat
-        </Button>
+
+        <Tooltip title="home">
+          <Button color="inherit" component={Link} to="/" sx={{ textTransform: 'none', mr: 2 }}>
+            🏠
+          </Button>
+        </Tooltip>
+        <Tooltip title="chat">
+          <Button color="inherit" component={Link} to="/chat" sx={{ textTransform: 'none', mr: 2}}>
+            💬
+          </Button>
+        </Tooltip>
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
 
         </Typography>

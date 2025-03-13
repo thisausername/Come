@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import AuthForm from '../components/AuthForm';
 import { login, LoginPayload } from '../api/auth';
 import { jwtDecode } from 'jwt-decode';
-import styles from '../styles/auth.module.css'
+import Navbar from '../components/Navbar';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -35,16 +35,35 @@ const Login = () => {
   };
 
   return (
-    <div>
-      {error && <div className={styles.error}>{error}</div>}
+    <>
+      <Navbar />
+      <div>
+        {error && (
+          <div
+            className="error-message"
+            style={{
+              color: '#D32F2F',
+              backgroundColor: '#FFEBEE',
+              padding: '8px 12px',
+              borderRadius: '4px',
+              textAlign: 'center',
+              marginTop: '12px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+            }}
+          >
+            {error}
+          </div>
+        )}
 
-      <AuthForm
-        type="login"
-        onSubmit={handleSubmit}
-        onSwitch={handleSwitch}
-        loading={loading}
-      />
-    </div>
+        <AuthForm
+          type="login"
+          onSubmit={handleSubmit}
+          onSwitch={handleSwitch}
+          loading={loading}
+          />
+      </div>
+    </>
   );
 };
 

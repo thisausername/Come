@@ -71,7 +71,7 @@ const PostList = () => {
 
   return (
     <Container sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>Posts</Typography>
+      <Typography variant="h4" gutterBottom>Latest</Typography>
       <List>
         {posts.map((post) => (
           <ListItem
@@ -80,7 +80,7 @@ const PostList = () => {
             to={`/post/${post.id}`}
             sx={{
               textDecoration: "none",
-              "&:hover": { bgcolor: "#f5f5f5" },
+              "&:hover": { border: "2px solid #1976d2" },
               display: "flex",
               alignItems: "center",
               py: 2,

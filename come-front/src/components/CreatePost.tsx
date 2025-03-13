@@ -12,13 +12,14 @@ import {
 } from '@mui/material';
 import Navbar from './Navbar';
 import { createPost } from '../api/post';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const CreatePost: React.FC<{ onPostCreated?: () => void }> = ({ onPostCreated }) => {
   const [title, setTitle] = useState<string>('');
   const [content, setContent] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   const MAX_TITLE_LENGTH = 50;
   const MIN_CONTENT_LENGTH = 10;
@@ -42,6 +43,7 @@ const CreatePost: React.FC<{ onPostCreated?: () => void }> = ({ onPostCreated })
       setTitle('');
       setContent('');
       if (onPostCreated) onPostCreated();
+      navigate("/");
     } catch (err) {
       setError('Failed to create post');
       console.error(err);
@@ -83,9 +85,9 @@ const CreatePost: React.FC<{ onPostCreated?: () => void }> = ({ onPostCreated })
                   fullWidth
                   required
                   multiline
-                  rows={6}
+                  rows={10}
                   variant="outlined"
-                  placeholder="Share your thoughts..."
+                  placeholder="talk something..."
                   helperText={`${content.length} characters (minimum ${MIN_CONTENT_LENGTH})`}
                 />
               </Box>
@@ -100,7 +102,7 @@ const CreatePost: React.FC<{ onPostCreated?: () => void }> = ({ onPostCreated })
                   variant="contained"
                   color="primary"
                   disabled={loading}
-                  sx={{ px: 4, py: 1, textTransform: 'none', borderRadius: 2 }}
+                  sx={{ px: 4, py: 1, textTransform: 'none', borderRadius: 4 }}
                 >
                   {loading ? 'Posting...' : 'Submit'}
                 </Button>
@@ -109,7 +111,7 @@ const CreatePost: React.FC<{ onPostCreated?: () => void }> = ({ onPostCreated })
                   color="secondary"
                   component={Link}
                   to="/"
-                  sx={{ px: 4, py: 1, textTransform: 'none', borderRadius: 2 }}
+                  sx={{ px: 4, py: 1, textTransform: 'none', borderRadius: 4 }}
                 >
                   Cancel
                 </Button>

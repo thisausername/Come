@@ -12,10 +12,10 @@ const Home: React.FC = () => {
       <Container sx={{ marginTop: 4, marginBottom: 4 }}>
         <Box sx={{ mb: 4, textAlign: 'center' }}>
           <Typography variant="h3" gutterBottom>
-            Welcome to the Forum
+            Welcome Come! 🥳
           </Typography>
           <Typography variant="subtitle1" color="textSecondary">
-            Share your thoughts and connect with others!
+            Aye aye
           </Typography>
         </Box>
 
@@ -35,9 +35,9 @@ const Home: React.FC = () => {
                   Trending Topics
                 </Typography>
                 <Box component="ul" sx={{ pl: 2 }}>
-                  <Typography component="li">#React</Typography>
-                  <Typography component="li">#TypeScript</Typography>
-                  <Typography component="li">#ForumFun</Typography>
+                  <Typography component="li">#Come</Typography>
+                  <Typography component="li">#Come</Typography>
+                  <Typography component="li">#Come</Typography>
                 </Box>
               </CardContent>
             </Card>

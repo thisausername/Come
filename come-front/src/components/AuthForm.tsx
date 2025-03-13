@@ -6,11 +6,11 @@ import {
   Button,
   Typography,
   Link,
-  CircularProgress
+  CircularProgress,
+  Box,
 } from '@mui/material';
-import styles from '../styles/auth.module.css';
 import { emailRegex } from '../constants/reg';
-import { Link as RouterLink } from 'react-router-dom'
+import { Link as RouterLink } from 'react-router-dom';
 
 interface AuthFormProps {
   type: 'login' | 'register';
@@ -35,15 +35,15 @@ const AuthForm: FC<AuthFormProps> = ({ type, onSubmit, onSwitch, loading }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('')
+    setError('');
 
     if (!emailRegex.test(email)) {
-      setError("invalid email format 😢");
+      setError('invalid email format 😢');
       return;
     }
 
     if (type === 'register' && password !== repeatPassword) {
-      setError("passwords do not match 🤔");
+      setError('passwords do not match 🤔');
       return;
     }
     try {
@@ -58,9 +58,24 @@ const AuthForm: FC<AuthFormProps> = ({ type, onSubmit, onSwitch, loading }) => {
   };
 
   return (
-    <div className={styles.container}>
-      <form className={styles.card} onSubmit={handleSubmit}>
-        <Typography variant="h4" className={styles.title}>
+    <Box
+      sx={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '100%',
+        maxWidth: 400,
+        p: 3,
+        boxShadow: 3,
+        borderRadius: 2,
+      }}
+    >
+      <form onSubmit={handleSubmit}>
+        <Typography
+          variant="h4"
+          sx={{ textAlign: 'center', mb: 3, color: 'text.primary' }}
+        >
           {type === 'login' ? '🎉 WelCome!' : '📝 Create Account'}
         </Typography>
 
@@ -76,7 +91,8 @@ const AuthForm: FC<AuthFormProps> = ({ type, onSubmit, onSwitch, loading }) => {
           />
         )}
 
-        <TextField label="Email"
+        <TextField
+          label="Email"
           variant="outlined"
           fullWidth
           margin="normal"
@@ -85,7 +101,8 @@ const AuthForm: FC<AuthFormProps> = ({ type, onSubmit, onSwitch, loading }) => {
           required
         />
 
-        <TextField label="Password"
+        <TextField
+          label="Password"
           type="password"
           variant="outlined"
           fullWidth
@@ -109,7 +126,7 @@ const AuthForm: FC<AuthFormProps> = ({ type, onSubmit, onSwitch, loading }) => {
         )}
 
         {error && (
-          <Typography color="error" paragraph>
+          <Typography color="error" sx={{ mt: 2, textAlign: 'center' }}>
             {error}
           </Typography>
         )}
@@ -131,13 +148,13 @@ const AuthForm: FC<AuthFormProps> = ({ type, onSubmit, onSwitch, loading }) => {
           )}
         </Button>
 
-        <Typography className={styles.link}>
+        <Typography sx={{ mt: 2, textAlign: 'center', color: 'text.secondary' }}>
           {type === 'login' ? (
             <>
               New comer? <Link onClick={onSwitch}>Sign up</Link>
               <br />
               <Link component={RouterLink} to="/forgot-password">
-               Forgot password? 😇
+                Forgot password? 😇
               </Link>
             </>
           ) : (
@@ -147,7 +164,7 @@ const AuthForm: FC<AuthFormProps> = ({ type, onSubmit, onSwitch, loading }) => {
           )}
         </Typography>
       </form>
-    </div>
+    </Box>
   );
 };
 

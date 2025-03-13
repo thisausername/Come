@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Typography, Box, Button, List, ListItem, ListItemText } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { getAllUsers, banUser, promoteToAdmin, deletePostAdmin, deleteCommentAdmin, getAdminDashboard } from '../api/admin';
+import { getAllUsers, banUser, promoteToAdmin, deletePostAdmin, getAdminDashboard } from '../api/admin';
 import { getPostsPaginated } from '../api/post';
 import { User } from '../api/user';
 import { Post } from '../api/post';
