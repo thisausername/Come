@@ -15,64 +15,43 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin:     func(r *http.Request) bool { return true },
-}
+var (
+	clients   = make(map[*Client]bool)
+	clientsMu sync.Mutex
+	broadcast = make(chan model.ChatMessage)
+)
 
 type Client struct {
 	conn *websocket.Conn
 	user model.User
 }
 
-var (
-	clients   = make(map[*Client]bool)
-	clientsMu sync.Mutex
-	broadcast = make(chan Message)
-)
-
-type Message struct {
-	UserID    uint   `json:"userId"`
-	Username  string `json:"username"`
-	Content   string `json:"content"`
-	Timestamp int64  `json:"timestamp"`
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
-func GetChatHistory(c *gin.Context) {
-	limitStr := c.DefaultQuery("limit", "50")
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil || limit < 1 {
-		limit = 50
-	}
+var once sync.Once
 
-	messages, err := repository.GetChatHistory(limit)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to fetch chat history"))
-		return
-	}
-
-	var response []Message
-	for _, msg := range messages {
-		var username string
-		if msg.UserID != 0 {
-			user, err := repository.QueryUser(msg.UserID)
-			if err == nil {
-				username = user.Username
-			} else {
-				username = "unknown"
+func init() {
+	once.Do(func() {
+		go func() {
+			for msg := range broadcast {
+				clientsMu.Lock()
+				log.Println("Broadcasting message:", msg.Content)
+				for client := range clients {
+					err := client.conn.WriteJSON(msg)
+					if err != nil {
+						log.Println("write error:", err)
+						client.conn.Close()
+						delete(clients, client)
+					}
+				}
+				clientsMu.Unlock()
 			}
-		} else {
-			username = fmt.Sprintf("anonymous_%d", msg.ID%1000)
-		}
-		response = append(response, Message{
-			UserID:    msg.UserID,
-			Username:  username,
-			Content:   msg.Content,
-			Timestamp: msg.CreatedAt.Unix(),
-		})
-	}
-	c.JSON(http.StatusOK, Success(http.StatusOK, response))
+		}()
+	})
 }
 
 func HandleChat(c *gin.Context) {
@@ -97,51 +76,98 @@ func HandleChat(c *gin.Context) {
 		log.Println("websocket upgrade failed:", err)
 		return
 	}
-
-	defer conn.Close()
+	log.Println("New WebSocket connection established for user:", user.Username)
 
 	client := &Client{conn: conn, user: user}
 	clientsMu.Lock()
 	clients[client] = true
 	clientsMu.Unlock()
 
-	go func() {
-		for msg := range broadcast {
-			clientsMu.Lock()
-			for client := range clients {
-				err := client.conn.WriteJSON(msg)
-				if err != nil {
-					log.Println("write error:", err)
-					client.conn.Close()
-					delete(clients, client)
-				}
-			}
-			clientsMu.Unlock()
+	joinMsg := model.ChatMessage{
+		UserID:    user.ID,
+		Username:  user.Username,
+		Content:   fmt.Sprintf("%s coming", user.Username),
+		Timestamp: time.Now().Unix(),
+		Type:      model.JoinType,
+	}
+	broadcast <- joinMsg
+
+	defer func() {
+		clientsMu.Lock()
+		delete(clients, client)
+		log.Println("Client disconnected via defer:", user.Username)
+		leaveMsg := model.ChatMessage{
+			UserID:    user.ID,
+			Username:  user.Username,
+			Content:   fmt.Sprintf("%s leaving", user.Username),
+			Timestamp: time.Now().Unix(),
+			Type:      model.LeaveType,
 		}
+		broadcast <- leaveMsg
+		clientsMu.Unlock()
+		conn.Close()
 	}()
 
+	go func() {
+		for {
+			time.Sleep(5 * time.Second)
+			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				log.Println("Ping failed, closing connection:", err)
+				conn.Close()
+				return
+			}
+		}
+	}()
+	conn.SetPongHandler(func(string) error {
+		log.Println("Pong received from", user.Username)
+		return nil
+	})
+
+	type TempMessage struct {
+		Content string `json:"content"`
+	}
+
 	for {
-		var msg Message
-		err := conn.ReadJSON(&msg)
+		var tempMsg TempMessage
+		err := conn.ReadJSON(&tempMsg)
 		if err != nil {
 			log.Println("read error:", err)
-			clientsMu.Lock()
-			delete(clients, client)
-			clientsMu.Unlock()
 			break
 		}
-		msg.UserID = user.ID
-		msg.Username = user.Username
-		msg.Timestamp = time.Now().Unix()
-
-		chatMsg := model.ChatMessage{
-			UserID:  user.ID,
-			Content: msg.Content,
+		log.Println("Received message from", user.Username, ":", tempMsg.Content)
+		msg := model.ChatMessage{
+			UserID:    user.ID,
+			Username:  user.Username,
+			Content:   tempMsg.Content,
+			Timestamp: time.Now().Unix(),
+			Type:      model.MessageType,
 		}
-		if err := repository.CreateChatMessage(&chatMsg); err != nil {
+		if err := repository.CreateChatMessage(&msg); err != nil {
 			log.Println("failed to save chat message:", err)
 		}
-
 		broadcast <- msg
 	}
+}
+
+func GetChatHistory(c *gin.Context) {
+	limitStr := c.DefaultQuery("limit", "50")
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		limit = 50
+	}
+
+	messages, err := repository.GetChatHistory(limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to fetch chat history"))
+		return
+	}
+
+	c.JSON(http.StatusOK, Success(http.StatusOK, messages))
+}
+
+func GetOnlineCount(c *gin.Context) {
+	clientsMu.Lock()
+	count := len(clients)
+	clientsMu.Unlock()
+	c.JSON(http.StatusOK, Success(http.StatusOK, map[string]int{"online": count}))
 }

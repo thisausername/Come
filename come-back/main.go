@@ -40,6 +40,7 @@ func main() {
 
 			public.GET("/chat", middleware.WsOptionalAuth(), controller.HandleChat)
 			public.GET("/chat/history", controller.GetChatHistory)
+			public.GET("/chat/online", controller.GetOnlineCount)
 		}
 
 		auth := api.Group("").Use(middleware.UserAuth())
