@@ -1,5 +1,7 @@
 package model
 
+import "encoding/json"
+
 type ChatMessageType int
 
 const (
@@ -19,6 +21,10 @@ func (t ChatMessageType) String() string {
 	default:
 		return "unknown"
 	}
+}
+
+func (t ChatMessageType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.String())
 }
 
 type ChatMessage struct {

@@ -39,7 +39,6 @@ func init() {
 		go func() {
 			for msg := range broadcast {
 				clientsMu.Lock()
-				log.Println("Broadcasting message:", msg.Content)
 				for client := range clients {
 					err := client.conn.WriteJSON(msg)
 					if err != nil {
@@ -86,7 +85,7 @@ func HandleChat(c *gin.Context) {
 	joinMsg := model.ChatMessage{
 		UserID:    user.ID,
 		Username:  user.Username,
-		Content:   fmt.Sprintf("%s coming", user.Username),
+		Content:   fmt.Sprintf("%s come", user.Username),
 		Timestamp: time.Now().Unix(),
 		Type:      model.JoinType,
 	}
@@ -99,7 +98,7 @@ func HandleChat(c *gin.Context) {
 		leaveMsg := model.ChatMessage{
 			UserID:    user.ID,
 			Username:  user.Username,
-			Content:   fmt.Sprintf("%s leaving", user.Username),
+			Content:   fmt.Sprintf("%s leave", user.Username),
 			Timestamp: time.Now().Unix(),
 			Type:      model.LeaveType,
 		}
@@ -110,7 +109,7 @@ func HandleChat(c *gin.Context) {
 
 	go func() {
 		for {
-			time.Sleep(5 * time.Second)
+			time.Sleep(time.Minute)
 			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				log.Println("Ping failed, closing connection:", err)
 				conn.Close()
@@ -123,22 +122,21 @@ func HandleChat(c *gin.Context) {
 		return nil
 	})
 
-	type TempMessage struct {
+	type Content struct {
 		Content string `json:"content"`
 	}
 
 	for {
-		var tempMsg TempMessage
-		err := conn.ReadJSON(&tempMsg)
+		var content Content
+		err := conn.ReadJSON(&content)
 		if err != nil {
 			log.Println("read error:", err)
 			break
 		}
-		log.Println("Received message from", user.Username, ":", tempMsg.Content)
 		msg := model.ChatMessage{
 			UserID:    user.ID,
 			Username:  user.Username,
-			Content:   tempMsg.Content,
+			Content:   content.Content,
 			Timestamp: time.Now().Unix(),
 			Type:      model.MessageType,
 		}
