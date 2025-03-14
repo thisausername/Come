@@ -24,6 +24,19 @@ var (
 type Client struct {
 	conn *websocket.Conn
 	user model.User
+	mu   sync.Mutex
+}
+
+func (c *Client) WriteJSON(v any) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.conn.WriteJSON(v)
+}
+
+func (c *Client) WriteMessage(messageType int, data []byte) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.conn.WriteMessage(messageType, data)
 }
 
 var upgrader = websocket.Upgrader{
@@ -40,7 +53,7 @@ func init() {
 			for msg := range broadcast {
 				clientsMu.Lock()
 				for client := range clients {
-					err := client.conn.WriteJSON(msg)
+					err := client.WriteJSON(msg)
 					if err != nil {
 						log.Println("write error:", err)
 						client.conn.Close()
@@ -110,7 +123,7 @@ func HandleChat(c *gin.Context) {
 	go func() {
 		for {
 			time.Sleep(time.Minute)
-			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+			if err := client.WriteMessage(websocket.PingMessage, nil); err != nil {
 				log.Println("Ping failed, closing connection:", err)
 				conn.Close()
 				return
