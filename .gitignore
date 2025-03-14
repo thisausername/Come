@@ -1,6 +1,7 @@
 .env
 
 /uploads/
+__pycache__/
 
 # come-front
 

@@ -1,0 +1,11 @@
+[project]
+name = "tests"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "locust>=2.33.1",
+    "locust-plugins>=4.6.0",
+    "websocket-client>=1.8.0",
+]
