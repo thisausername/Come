@@ -1,42 +1,72 @@
 package controller
 
 import (
-	"come-back/model"
-	"come-back/repository"
+	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 	"sync"
 	"time"
 
+	"come-back/model"
+	"come-back/repository"
+
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
 )
 
 var (
 	clients   = make(map[*Client]bool)
 	clientsMu sync.Mutex
-	broadcast = make(chan model.ChatMessage)
+	broadcast = make(chan model.ChatMessage, 1000)
+
+	batchSize     = 100
+	messageBuffer = make([]model.ChatMessage, 0, batchSize)
+	bufferMu      sync.Mutex
+	batchInterval = 5 * time.Second
+
+	redisClient     *redis.Client
+	enableChatCache bool
 )
 
 type Client struct {
-	conn *websocket.Conn
-	user model.User
-	mu   sync.Mutex
+	conn   *websocket.Conn
+	user   model.User
+	mu     sync.Mutex
+	closed bool
 }
 
 func (c *Client) WriteJSON(v any) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.closed {
+		return nil
+	}
 	return c.conn.WriteJSON(v)
 }
 
 func (c *Client) WriteMessage(messageType int, data []byte) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.closed {
+		return nil
+	}
 	return c.conn.WriteMessage(messageType, data)
+}
+
+func (c *Client) Close() {
+	c.mu.Lock()
+	if !c.closed {
+		c.conn.Close()
+		c.closed = true
+	}
+	c.mu.Unlock()
 }
 
 var upgrader = websocket.Upgrader{
@@ -47,20 +77,76 @@ var upgrader = websocket.Upgrader{
 
 var once sync.Once
 
+func initRedis() {
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("error loading environment variables!")
+	}
+
+	enableChatCache = os.Getenv("USE_CHAT_CACHE") == "true"
+	if enableChatCache {
+		log.Printf("enabling redis...")
+		redisAddr := os.Getenv("REDIS_ADDR")
+		redisClient = redis.NewClient(&redis.Options{
+			Addr:     redisAddr,
+			Password: "",
+			DB:       0,
+		})
+		ctx := context.Background()
+		_, err := redisClient.Ping(ctx).Result()
+		if err != nil {
+			log.Printf("Failed to connect to Redis: %v, disabling Redis", err)
+			enableChatCache = false
+			redisClient = nil
+		} else {
+			log.Println("Redis connected successfully")
+		}
+	} else {
+		log.Printf("redis disabled")
+	}
+}
+
 func init() {
+	initRedis()
 	once.Do(func() {
 		go func() {
 			for msg := range broadcast {
 				clientsMu.Lock()
 				for client := range clients {
+					if client.closed {
+						delete(clients, client)
+						continue
+					}
 					err := client.WriteJSON(msg)
 					if err != nil {
 						log.Println("write error:", err)
-						client.conn.Close()
+						client.Close()
 						delete(clients, client)
 					}
 				}
 				clientsMu.Unlock()
+			}
+		}()
+
+		go func() {
+			ticker := time.NewTicker(batchInterval)
+			defer ticker.Stop()
+			for range ticker.C {
+				bufferMu.Lock()
+				if len(messageBuffer) == 0 {
+					bufferMu.Unlock()
+					continue
+				}
+
+				messages := make([]model.ChatMessage, len(messageBuffer))
+				copy(messages, messageBuffer)
+				messageBuffer = messageBuffer[:0]
+				bufferMu.Unlock()
+
+				if err := repository.CreateChatMessages(messages); err != nil {
+					log.Printf("failed to batch save %d messages: %v", len(messages), err)
+				} else {
+					log.Printf("successfully saved %d messages", len(messages))
+				}
 			}
 		}()
 	})
@@ -90,7 +176,7 @@ func HandleChat(c *gin.Context) {
 	}
 	log.Println("New WebSocket connection established for user:", user.Username)
 
-	client := &Client{conn: conn, user: user}
+	client := &Client{conn: conn, user: user, closed: false}
 	clientsMu.Lock()
 	clients[client] = true
 	clientsMu.Unlock()
@@ -102,12 +188,30 @@ func HandleChat(c *gin.Context) {
 		Timestamp: time.Now().Unix(),
 		Type:      model.JoinType,
 	}
-	broadcast <- joinMsg
+	select {
+	case broadcast <- joinMsg:
+		if enableChatCache && redisClient != nil {
+			ctx := c.Request.Context()
+			msgJSON, _ := json.Marshal(joinMsg)
+			redisClient.LPush(ctx, "chat_history", msgJSON)
+			redisClient.LTrim(ctx, "chat_history", 0, 49)
+		}
+	default:
+		log.Println("Broadcast channel full, dropping join message")
+	}
+
+	done := make(chan struct{})
 
 	defer func() {
+		close(done)
+		client.Close()
+	}()
+
+	go func() {
+		<-done
 		clientsMu.Lock()
 		delete(clients, client)
-		log.Println("Client disconnected via defer:", user.Username)
+		log.Println("Client disconnected:", user.Username)
 		leaveMsg := model.ChatMessage{
 			UserID:    user.ID,
 			Username:  user.Username,
@@ -115,17 +219,32 @@ func HandleChat(c *gin.Context) {
 			Timestamp: time.Now().Unix(),
 			Type:      model.LeaveType,
 		}
-		broadcast <- leaveMsg
+		select {
+		case broadcast <- leaveMsg:
+			if enableChatCache && redisClient != nil {
+				ctx := context.Background()
+				msgJSON, _ := json.Marshal(leaveMsg)
+				redisClient.LPush(ctx, "chat_history", msgJSON)
+				redisClient.LTrim(ctx, "chat_history", 0, 49)
+			}
+		default:
+			log.Println("Broadcast channel full, dropping leave message")
+		}
 		clientsMu.Unlock()
-		conn.Close()
 	}()
 
 	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
 		for {
-			time.Sleep(time.Minute)
-			if err := client.WriteMessage(websocket.PingMessage, nil); err != nil {
-				log.Println("Ping failed, closing connection:", err)
-				conn.Close()
+			select {
+			case <-ticker.C:
+				if err := client.WriteMessage(websocket.PingMessage, nil); err != nil {
+					log.Println("Ping failed, closing connection:", err)
+					client.Close()
+					return
+				}
+			case <-done:
 				return
 			}
 		}
@@ -143,9 +262,14 @@ func HandleChat(c *gin.Context) {
 		var content Content
 		err := conn.ReadJSON(&content)
 		if err != nil {
-			log.Println("read error:", err)
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+				log.Printf("Client %s closed connection normally", user.Username)
+			} else {
+				log.Printf("read error for %s: %v", user.Username, err)
+			}
 			break
 		}
+
 		msg := model.ChatMessage{
 			UserID:    user.ID,
 			Username:  user.Username,
@@ -153,10 +277,22 @@ func HandleChat(c *gin.Context) {
 			Timestamp: time.Now().Unix(),
 			Type:      model.MessageType,
 		}
-		if err := repository.CreateChatMessage(&msg); err != nil {
-			log.Println("failed to save chat message:", err)
+
+		bufferMu.Lock()
+		messageBuffer = append(messageBuffer, msg)
+		bufferMu.Unlock()
+
+		select {
+		case broadcast <- msg:
+			if enableChatCache && redisClient != nil {
+				ctx := c.Request.Context()
+				msgJSON, _ := json.Marshal(msg)
+				redisClient.LPush(ctx, "chat_history", msgJSON)
+				redisClient.LTrim(ctx, "chat_history", 0, 49)
+			}
+		default:
+			log.Println("Broadcast channel full, dropping message")
 		}
-		broadcast <- msg
 	}
 }
 
@@ -167,10 +303,46 @@ func GetChatHistory(c *gin.Context) {
 		limit = 50
 	}
 
-	messages, err := repository.GetChatHistory(limit)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to fetch chat history"))
-		return
+	var messages []model.ChatMessage
+	ctx := c.Request.Context()
+	cacheHit := false
+
+	if enableChatCache && redisClient != nil {
+		cached, err := redisClient.LRange(ctx, "chat_history", 0, int64(limit-1)).Result()
+		if err == nil && len(cached) > 0 {
+			messages = make([]model.ChatMessage, 0, len(cached))
+			for _, msgJSON := range cached {
+				var msg model.ChatMessage
+				if json.Unmarshal([]byte(msgJSON), &msg) == nil {
+					messages = append(messages, msg)
+				}
+			}
+			// log.Printf("Fetched %d messages from Redis cache", len(messages))
+			cacheHit = true
+		} else if err != nil {
+			log.Printf("Failed to fetch from Redis: %v", err)
+		}
+	}
+
+	if !cacheHit {
+		// log.Printf("Fetching from database")
+		messages, err = repository.GetChatHistory(limit)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "failed to fetch chat history"))
+			return
+		}
+		if enableChatCache && redisClient != nil {
+			for _, msg := range messages {
+				msgJSON, err := json.Marshal(msg)
+				if err == nil {
+					redisClient.LPush(ctx, "chat_history", msgJSON)
+				} else {
+					log.Printf("Failed to marshal message for Redis: %v", err)
+				}
+			}
+			redisClient.LTrim(ctx, "chat_history", 0, int64(limit-1))
+			log.Printf("Updated Redis cache with %d messages from database", len(messages))
+		}
 	}
 
 	c.JSON(http.StatusOK, Success(http.StatusOK, messages))

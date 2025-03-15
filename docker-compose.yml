@@ -4,8 +4,6 @@ services:
     container_name: come-front
     ports:
       - "80:80"
-    environment:
-      - VITE_API_URL=${VITE_API_URL}
     depends_on:
       - backend
 
@@ -24,8 +22,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-#      redis:
-#        condition: service_started
+      redis:
+        condition: service_started
 
   mysql:
     image: mysql:8.0
@@ -46,13 +44,14 @@ services:
       timeout: 10s
       retries: 10
 
-#  redis:
-#    image: redis:7.0-alpine
-#    ports:
-#      - "6379:6379"
-#    volumes:
-#      - redis_data:/data
-#    command: redis-server --appendonly yes
+  redis:
+    image: redis:7.0-alpine
+    container_name: come-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
 
 volumes:
   mysql_data:
