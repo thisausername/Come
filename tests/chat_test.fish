@@ -1,12 +1,12 @@
 #!/usr/bin/env fish
 
-set SCRIPT "locust/chat_ws.py"
-set USERS 1000
-set RATE 50
-set DURATION "60s"
+set SCRIPT "locust/chat.py"
+set USERS 500
+set RATE 10
+set DURATION "30s"
 set WORKERS 2
 set MASTER_HOST "localhost"
-set LOG_DIR "logs"
+set LOG_DIR "logs/chat"
 
 mkdir -p $LOG_DIR
 
