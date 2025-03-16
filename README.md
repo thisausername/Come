@@ -45,7 +45,6 @@ Follow these steps to build and deploy the application locally:
 3. Build and Start Services
 
     Run the following command to build and start all services:
-    bash
     ```bash
     docker-compose up --build
     ```
