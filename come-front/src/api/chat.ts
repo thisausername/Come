@@ -13,12 +13,10 @@ export interface ChatMessage {
 
 export const getChatHistory = async (limit: number=50): Promise<ChatMessage[]> => {
     const response = await apiClient.get(`/chat/history?limit=${limit}`);
-    console.log(response)
     return response.data["history"];
 }
 
 export const getOnlineCount = async (): Promise<number> => {
     const response = await apiClient.get("/chat/online");
-    console.log(response)
     return response.data["count"];
 }
