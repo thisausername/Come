@@ -48,7 +48,7 @@ const styles = {
 const getWebSocketUrl = (token: string) => {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const host = window.location.host;
-  return `${protocol}//${host}/api/chat?token=${token}`;
+  return `${protocol}//${host}/api/chatroom?token=${token}`;
 };
 
 const Chat: React.FC = () => {

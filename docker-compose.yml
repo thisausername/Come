@@ -24,6 +24,24 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+  
+  chat-service:
+    build: ./come-back/chat-service
+    container_name: chat-service
+    restart: always
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./.env:/app/.env
+    environment:
+      - MYSQL_DSN=${MYSQL_DSN}
+      - REDIS_ADDR=${REDIS_ADDR}
+      - CHAT_PORT=8083
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   mysql:
     image: mysql:8.0

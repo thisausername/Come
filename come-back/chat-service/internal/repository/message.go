@@ -1,6 +1,6 @@
 package repository
 
-import "come-back/model"
+import "chat-service/internal/model"
 
 func CreateChatMessage(msg *model.ChatMessage) error {
 	return dB.Create(msg).Error
