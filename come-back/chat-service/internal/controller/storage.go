@@ -88,18 +88,22 @@ func SaveMessageToCache(ctx context.Context, msg model.ChatMessage) {
 func GetChatHistory(ctx context.Context, limit int) ([]model.ChatMessage, error) {
 	var messages []model.ChatMessage
 	cacheHit := false
-
 	if enableChatCache && redisClient != nil {
 		cached, err := redisClient.LRange(ctx, "chat_history", 0, int64(limit-1)).Result()
 		if err == nil && len(cached) > 0 {
 			messages = make([]model.ChatMessage, 0, len(cached))
-			for _, msgJSON := range cached {
+			for i, msgJSON := range cached {
 				var msg model.ChatMessage
-				if json.Unmarshal([]byte(msgJSON), &msg) == nil {
-					messages = append(messages, msg)
+				if err := json.Unmarshal([]byte(msgJSON), &msg); err != nil {
+					log.Printf("Failed to unmarshal message %d: %v, JSON: %s", i, err, msgJSON)
+					continue
 				}
+				messages = append(messages, msg)
 			}
-			cacheHit = true
+
+			if len(messages) > 0 {
+				cacheHit = true
+			}
 		} else if err != nil {
 			log.Printf("Failed to fetch from Redis: %v", err)
 		}

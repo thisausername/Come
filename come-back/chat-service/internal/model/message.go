@@ -1,6 +1,9 @@
 package model
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strings"
+)
 
 type ChatMessageType int
 
@@ -25,6 +28,24 @@ func (t ChatMessageType) String() string {
 
 func (t ChatMessageType) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.String())
+}
+
+func (t *ChatMessageType) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	switch strings.ToLower(s) {
+	case "message":
+		*t = MessageType
+	case "join":
+		*t = JoinType
+	case "leave":
+		*t = LeaveType
+	default:
+		*t = MessageType
+	}
+	return nil
 }
 
 type ChatMessage struct {
