@@ -13,7 +13,7 @@ class WebSocketClient:
     def connect(self):
         start_time = time.time()
         try:
-            self.ws.connect(f"{self.host}/api/chat?token={self.token}")
+            self.ws.connect(f"{self.host}/api/chatroom?token={self.token}")
             events.request.fire(
                 request_type="WebSocket",
                 name="connect",
@@ -73,8 +73,8 @@ class WebSocketClient:
         self.ws.close()
 
 class ChatUser(User):
-    wait_time = between(0.1, 1)
-    host = "ws://localhost:8080"
+    wait_time = between(1, 5)
+    host = "ws://localhost:8083"
 
     def on_start(self):
         self.client = WebSocketClient(self.host)
