@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"math/rand"
@@ -32,7 +31,6 @@ func (h *HTTPUserProvider) GetUserByID(id uint) (model.User, error) {
 
 func init() {
 	StartWebSocketManager()
-	StartMessageBatcher()
 }
 
 func (cc *ChatController) HandleChat(c *gin.Context) {
@@ -72,7 +70,6 @@ func (cc *ChatController) HandleChat(c *gin.Context) {
 		Type:      model.JoinType,
 	}
 	BroadcastMessage(joinMsg)
-	SaveMessageToCache(c.Request.Context(), joinMsg)
 
 	done := make(chan struct{})
 	defer func() {
@@ -93,7 +90,6 @@ func (cc *ChatController) HandleChat(c *gin.Context) {
 			Type:      model.LeaveType,
 		}
 		BroadcastMessage(leaveMsg)
-		SaveMessageToCache(context.Background(), leaveMsg)
 		clientsMu.Unlock()
 	}()
 
@@ -147,12 +143,8 @@ func (cc *ChatController) HandleChat(c *gin.Context) {
 			Type:      model.MessageType,
 		}
 
-		bufferMu.Lock()
-		messageBuffer = append(messageBuffer, msg)
-		bufferMu.Unlock()
-
 		BroadcastMessage(msg)
-		SaveMessageToCache(c.Request.Context(), msg)
+		StoreMessage(c.Request.Context(), msg)
 	}
 }
 
