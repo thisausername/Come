@@ -9,6 +9,10 @@ export interface Post {
   authorId: number;
   createdAt: string;
   updatedAt: string;
+
+  isLiked: boolean;    // 新增字段
+  isBookmarked: boolean; // 新增字段
+  likesCount: number;
 }
 
 export interface Comment {
@@ -19,6 +23,20 @@ export interface Comment {
   createdAt: string;
   updatedAt: string;
 }
+
+
+
+// 新增点赞/取消点赞API
+export const likePost = async (postId: number, state: boolean): Promise<Post> => {
+  const response = await apiClient.patch(`/post/${postId}/like`, { state });
+  return response.data.data;
+};
+
+// 新增收藏/取消收藏API
+export const bookmarkPost = async (postId: number, state: boolean): Promise<Post> => {
+  const response = await apiClient.patch(`/post/${postId}/bookmark`, { state });
+  return response.data.data;
+};
 
 export const getPostsPaginated = async (page: number, pageSize: number) => {
   const response = await apiClient.get(`/posts?page=${page}&pageSize=${pageSize}`);

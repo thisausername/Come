@@ -1,17 +1,50 @@
 // src/components/PostDetail.tsx
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button, Card, CardContent, Container, Typography, TextField } from '@mui/material';
+import { 
+  Button, 
+  Card, 
+  CardContent, 
+  Container, 
+  Typography, 
+  TextField,
+  SvgIcon,
+  SvgIconProps,
+  IconButton,
+  Tooltip, 
+} from '@mui/material';
 import Navbar from './Navbar';
 import Comments from './Comments';
-import { Post, Comment, getPost, getPostComments, createComment, deletePost, updatePost } from '../api/post';
+import { Post, Comment, getPost, getPostComments, createComment, deletePost, updatePost, likePost, bookmarkPost } from '../api/post';
 import { getProfile, User } from '../api/user';
 import { jwtDecode } from 'jwt-decode';
+
+// 修复图标props类型
+const ThumbUpIcon = (props: SvgIconProps) => (
+  <SvgIcon {...props}>
+    <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/>
+  </SvgIcon>
+);
+
+const BookmarkIcon = (props: SvgIconProps) => (
+  <SvgIcon {...props}>
+    <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
+  </SvgIcon>
+);
+
+const ShareIcon = (props: SvgIconProps) => (
+  <SvgIcon {...props}>
+    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92zM18 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM6 13c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm12 7.02c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
+  </SvgIcon>
+);
 
 const PostDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
+  const [liked, setLiked] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
   const [post, setPost] = useState<Post | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -41,7 +74,12 @@ const PostDetail: React.FC = () => {
           getPost(postId),
           getPostComments(postId),
         ]);
+        
         setPost(postData);
+        setLiked(postData.isLiked);
+        setBookmarked(postData.isBookmarked);
+        setLikesCount(postData.likesCount);
+        
         setComments(commentData);
         setEditedTitle(postData.title);
         setEditedContent(postData.content);
@@ -111,6 +149,42 @@ const PostDetail: React.FC = () => {
     }
   };
 
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      alert('链接已复制到剪贴板！');
+    } catch (err) {
+      setError('分享失败，请手动复制链接');
+    }
+  };
+
+  const handleLike = async () => {
+    if (!token) return alert('请先登录');
+    if (currentUser?.banned || !post) return;
+    
+    try {
+      const newState = !liked;
+      await likePost(post.id, newState);
+      setLiked(newState);
+      setLikesCount(prev => newState ? prev + 1 : prev - 1);
+    } catch (err) {
+      setError('操作失败，请重试');
+    }
+  };
+
+  const handleBookmark = async () => {
+    if (!token) return alert('请先登录');
+    if (currentUser?.banned || !post) return;
+
+    try {
+      const newState = !bookmarked;
+      await bookmarkPost(post.id, newState);
+      setBookmarked(newState);
+    } catch (err) {
+      setError('操作失败，请重试');
+    }
+  };
+
   if (loading) {
     return <Container maxWidth="md" sx={{ mt: 4 }}><Typography>Loading...</Typography></Container>;
   }
@@ -139,6 +213,57 @@ const PostDetail: React.FC = () => {
                 <Typography variant="caption" color="text.secondary">
                   Posted by {post.authorId} on {new Date(post.createdAt).toLocaleString()}
                 </Typography>
+
+                <div style={{ 
+                      display: 'flex',
+                      gap: '8px',
+                      alignItems: 'center',
+                      marginTop: '8px'
+                    }}>
+                      <Tooltip title="Like" arrow>
+                        <IconButton 
+                          onClick={handleLike}
+                          disabled={currentUser?.banned}
+                          sx={{ 
+                            color: liked ? 'error.main' : 'inherit',
+                            '&:hover': {
+                              backgroundColor: 'rgba(245, 0, 0, 0.04)'
+                            }
+                          }}
+                        >
+                          <ThumbUpIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Tooltip title="Bookmark" arrow>
+                        <IconButton
+                          onClick={handleBookmark}
+                          disabled={currentUser?.banned}
+                          sx={{ 
+                            color: bookmarked ? 'primary.main' : 'inherit',
+                            '&:hover': {
+                              backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                            }
+                          }}
+                        >
+                          <BookmarkIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Tooltip title="Share" arrow>
+                        <IconButton
+                          onClick={handleShare}
+                          sx={{
+                            '&:hover': {
+                              backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                            }
+                          }}
+                        >
+                          <ShareIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </div>
+                
                 {canEditOrDelete && (
                   <div>
                     <Button variant="contained" onClick={handleEdit} sx={{ mt: 2, mr: 1 }}>Edit</Button>
@@ -165,4 +290,3 @@ const PostDetail: React.FC = () => {
 };
 
 export default PostDetail;
-

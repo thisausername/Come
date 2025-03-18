@@ -10,4 +10,8 @@ type Post struct {
 	Author    User      `gorm:"foreignKey:AuthorID;references:ID;constraint:OnDelete:CASCADE"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
+
+	LikesCount   int  `json:"likesCount" gorm:"-"`
+	IsLiked      bool `json:"isLiked" gorm:"-"`
+	IsBookmarked bool `json:"isBookmarked" gorm:"-"`
 }

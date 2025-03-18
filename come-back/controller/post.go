@@ -279,3 +279,84 @@ func CreateComment(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, Success(http.StatusCreated, comment))
 }
+
+// 新增点赞处理
+func ToggleLike(c *gin.Context) {
+	userID := c.MustGet("user_id").(uint)
+
+	postID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, Error(http.StatusBadRequest, "invalid post ID"))
+		return
+	}
+
+	var input struct {
+		State bool `json:"state"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, Error(http.StatusBadRequest, "invalid request"))
+		return
+	}
+
+	if err := repository.ToggleLike(uint(postID), userID, input.State); err != nil {
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "操作失败"))
+		return
+	}
+
+	post, err := repository.QueryPostWithAuth(uint(postID), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "获取数据失败"))
+		return
+	}
+
+	c.JSON(http.StatusOK, Success(http.StatusOK, post))
+}
+
+// 新增收藏处理函数
+func ToggleBookmark(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, Error(http.StatusUnauthorized, "用户未登录"))
+		return
+	}
+
+	postID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, Error(http.StatusBadRequest, "无效的帖子ID"))
+		return
+	}
+
+	var input struct {
+		State bool `json:"state"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, Error(http.StatusBadRequest, "无效请求格式"))
+		return
+	}
+
+	// 检查用户是否被禁言
+	banned, err := repository.UserIsBanned(userID.(uint))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "无法验证用户状态"))
+		return
+	}
+	if banned {
+		c.JSON(http.StatusForbidden, Error(http.StatusForbidden, "用户已被禁言"))
+		return
+	}
+
+	// 执行收藏操作
+	if err := repository.ToggleBookmark(uint(postID), userID.(uint), input.State); err != nil {
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "操作失败"))
+		return
+	}
+
+	// 获取更新后的帖子数据
+	updatedPost, err := repository.QueryPostWithAuth(uint(postID), userID.(uint))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "获取数据失败"))
+		return
+	}
+
+	c.JSON(http.StatusOK, Success(http.StatusOK, updatedPost))
+}

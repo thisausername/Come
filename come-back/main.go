@@ -49,6 +49,9 @@ func main() {
 			auth.POST("/post/:id/comment", controller.CreateComment)
 			auth.PUT("/post/:id", controller.UpdatePost)
 			auth.DELETE("/post/:id", controller.DeletePost)
+
+			auth.PATCH("/post/:id/like", controller.ToggleLike)
+			auth.PATCH("/post/:id/bookmark", controller.ToggleBookmark)
 		}
 
 		admin := api.Group("/admin").Use(middleware.AdminAuth())

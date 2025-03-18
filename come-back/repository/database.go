@@ -19,7 +19,13 @@ func InitMySQL(dsn string) error {
 		return fmt.Errorf("MySQL connection failed: %v", err)
 	}
 	fmt.Println("MySQL connected")
-	err = dB.AutoMigrate(&model.User{}, &model.Post{}, &model.Comment{})
+	err = dB.AutoMigrate(
+		&model.User{},
+		&model.Post{},
+		&model.Comment{},
+		&model.Like{},     // 新增点赞表迁移
+		&model.Bookmark{}, // 新增收藏表迁移
+	)
 	if err != nil {
 		return err
 	}
