@@ -19,7 +19,6 @@ import { Post, Comment, getPost, getPostComments, createComment, deletePost, upd
 import { getProfile, User } from '../api/user';
 import { jwtDecode } from 'jwt-decode';
 
-// 修复图标props类型
 const ThumbUpIcon = (props: SvgIconProps) => (
   <SvgIcon {...props}>
     <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/>
@@ -152,14 +151,14 @@ const PostDetail: React.FC = () => {
   const handleShare = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      alert('链接已复制到剪贴板！');
+      alert('The link has been copied to the clipboard!');
     } catch (err) {
-      setError('分享失败，请手动复制链接');
+      setError('If the sharing fails, please copy the link manually');
     }
   };
 
   const handleLike = async () => {
-    if (!token) return alert('请先登录');
+    if (!token) return alert('Please log in first');
     if (currentUser?.banned || !post) return;
     
     try {
@@ -168,12 +167,12 @@ const PostDetail: React.FC = () => {
       setLiked(newState);
       setLikesCount(prev => newState ? prev + 1 : prev - 1);
     } catch (err) {
-      setError('操作失败，请重试');
+      setError('The operation failed, please try again');
     }
   };
 
   const handleBookmark = async () => {
-    if (!token) return alert('请先登录');
+    if (!token) return alert('Please log in first');
     if (currentUser?.banned || !post) return;
 
     try {
@@ -181,7 +180,7 @@ const PostDetail: React.FC = () => {
       await bookmarkPost(post.id, newState);
       setBookmarked(newState);
     } catch (err) {
-      setError('操作失败，请重试');
+      setError('The operation failed, please try again');
     }
   };
 

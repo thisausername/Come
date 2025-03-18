@@ -10,8 +10,8 @@ export interface Post {
   createdAt: string;
   updatedAt: string;
 
-  isLiked: boolean;    // 新增字段
-  isBookmarked: boolean; // 新增字段
+  isLiked: boolean;    
+  isBookmarked: boolean;
   likesCount: number;
 }
 
@@ -24,15 +24,11 @@ export interface Comment {
   updatedAt: string;
 }
 
-
-
-// 新增点赞/取消点赞API
 export const likePost = async (postId: number, state: boolean): Promise<Post> => {
   const response = await apiClient.patch(`/post/${postId}/like`, { state });
   return response.data.data;
 };
 
-// 新增收藏/取消收藏API
 export const bookmarkPost = async (postId: number, state: boolean): Promise<Post> => {
   const response = await apiClient.patch(`/post/${postId}/bookmark`, { state });
   return response.data.data;

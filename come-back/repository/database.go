@@ -23,8 +23,8 @@ func InitMySQL(dsn string) error {
 		&model.User{},
 		&model.Post{},
 		&model.Comment{},
-		&model.Like{},     // 新增点赞表迁移
-		&model.Bookmark{}, // 新增收藏表迁移
+		&model.Like{},
+		&model.Bookmark{},
 	)
 	if err != nil {
 		return err

@@ -280,7 +280,6 @@ func CreateComment(c *gin.Context) {
 	c.JSON(http.StatusCreated, Success(http.StatusCreated, comment))
 }
 
-// 新增点赞处理
 func ToggleLike(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
 
@@ -312,7 +311,6 @@ func ToggleLike(c *gin.Context) {
 	c.JSON(http.StatusOK, Success(http.StatusOK, post))
 }
 
-// 新增收藏处理函数
 func ToggleBookmark(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -334,7 +332,6 @@ func ToggleBookmark(c *gin.Context) {
 		return
 	}
 
-	// 检查用户是否被禁言
 	banned, err := repository.UserIsBanned(userID.(uint))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "无法验证用户状态"))
@@ -345,13 +342,11 @@ func ToggleBookmark(c *gin.Context) {
 		return
 	}
 
-	// 执行收藏操作
 	if err := repository.ToggleBookmark(uint(postID), userID.(uint), input.State); err != nil {
 		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "操作失败"))
 		return
 	}
 
-	// 获取更新后的帖子数据
 	updatedPost, err := repository.QueryPostWithAuth(uint(postID), userID.(uint))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, Error(http.StatusInternalServerError, "获取数据失败"))
