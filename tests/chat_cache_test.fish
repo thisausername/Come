@@ -4,9 +4,9 @@ set PROJECT_ROOT (realpath (dirname (status --current-filename))/..)
 set LOCUST_FILE "locust/chat_cache.py"
 set OUTPUT_DIR "logs/chat_cache"
 set HOST "http://localhost"
-set USERS 1000
+set USERS 500
 set RATE 10
-set DURATION "2m"
+set DURATION "1m"
 
 mkdir -p $OUTPUT_DIR
 
@@ -22,7 +22,7 @@ function run_locust_test
         echo "USE_CHAT_CACHE=$USE_CACHE" > "$PROJECT_ROOT/.env"
     end
 
-    sudo docker-compose -f "$PROJECT_ROOT/docker-compose.yml" restart backend
+    sudo docker-compose -f "$PROJECT_ROOT/docker-compose.yml" restart chat-service
     sleep 5
 
     uv run locust -f $LOCUST_FILE \

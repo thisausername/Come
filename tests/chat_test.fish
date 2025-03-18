@@ -3,7 +3,7 @@
 set SCRIPT "locust/chat.py"
 set USERS 500
 set RATE 10
-set DURATION "30s"
+set DURATION "60s"
 set WORKERS 2
 set MASTER_HOST "localhost"
 set LOG_DIR "logs/chat"
